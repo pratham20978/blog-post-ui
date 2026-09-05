@@ -14,6 +14,11 @@ import type { NextConfig } from "next";
  * with while keeping `/blogs/[slug]` canonical.
  */
 const nextConfig: NextConfig = {
+  // Emits .next/standalone — the traced server plus only the node_modules it
+  // reaches — which is what the Dockerfile ships instead of a full install.
+  // Harmless outside Docker: `next dev` and `next start` ignore it.
+  output: "standalone",
+
   reactStrictMode: true,
 
   typedRoutes: true,

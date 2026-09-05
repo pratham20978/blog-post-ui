@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets stay out of the build context entirely. Next would otherwise load
+# .env.local during `next build` and inline any NEXT_PUBLIC_ value it found.
+.env
+.env.*
+!.env.example
+
+.git/
+.gitignore
+Dockerfile
+.dockerignore
+.DS_Store
