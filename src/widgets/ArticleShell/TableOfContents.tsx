@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+import { useReadingPosition } from "@/features/marker/model/ReadingPositionProvider";
 import type { BlogSection } from "@/shared/contracts";
 import { cn } from "@/shared/lib/cn";
 
@@ -18,34 +17,7 @@ export function TableOfContents({
   sections: readonly BlogSection[];
   className?: string;
 }) {
-  const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (sections.length === 0) return;
-
-    const headings = sections
-      .map((section) => document.getElementById(section.anchor))
-      .filter((element): element is HTMLElement => element !== null);
-
-    if (headings.length === 0) return;
-
-    // The band is the top slice of the viewport: a heading counts as current
-    // once it reaches the top, not when it first appears at the bottom.
-    // Without that, scrolling down highlights the *next* section early.
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-
-        if (visible[0]) setActiveAnchor(visible[0].target.id);
-      },
-      { rootMargin: "-80px 0px -70% 0px", threshold: 0 },
-    );
-
-    for (const heading of headings) observer.observe(heading);
-    return () => observer.disconnect();
-  }, [sections]);
+  const { activeAnchor } = useReadingPosition();
 
   if (sections.length < 2) return null;
 

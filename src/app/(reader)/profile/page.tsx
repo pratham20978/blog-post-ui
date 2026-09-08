@@ -20,6 +20,17 @@ export const metadata: Metadata = {
 export default async function ProfilePage() {
   const session = await getServerSession();
 
+  if (session.status === "loading") {
+    return (
+      <Container className="py-24 text-center" aria-live="polite">
+        <Eyebrow>Profile</Eyebrow>
+        <h1 className="mt-4 text-title font-semibold tracking-title">
+          Restoring your session…
+        </h1>
+      </Container>
+    );
+  }
+
   if (session.status !== "authenticated") {
     return (
       <Container className="py-24 text-center">
@@ -102,7 +113,10 @@ export default async function ProfilePage() {
           <ul className="flex flex-col">
             {resolvedMarkers.map(({ marker, blog }) => (
               <li key={marker.blog_id} className="border-b border-rule last:border-b-0">
-                <Link href={`/blogs/${blog.slug}`} className="group block py-4">
+                <Link
+                  href={markerHref(blog, marker)}
+                  className="group block py-4"
+                >
                   <div className="flex items-baseline justify-between gap-4">
                     <span className="text-[0.9375rem] text-fg transition-colors group-hover:text-muted">
                       {blog.title}
@@ -200,4 +214,9 @@ function EmptyState({ children }: { children: React.ReactNode }) {
       {children}
     </p>
   );
+}
+
+function markerHref(blog: BlogSummary, marker: Marker): `/blogs/${string}` {
+  const hash = marker.anchor.kind === "section" ? `#${marker.anchor.anchor}` : "";
+  return `/blogs/${blog.slug}${hash}`;
 }

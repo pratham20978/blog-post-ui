@@ -11,6 +11,21 @@ import type {
 } from "./common";
 
 export type BlogStatus = "draft" | "published" | "archived";
+export type BlogTier = "L1" | "L2" | "L3" | "L4";
+export type BlogDifficulty = "beginner" | "intermediate" | "advanced";
+
+export interface BlogMetadata {
+  readonly cover_image_url: string | null;
+  readonly cover_image_alt: string | null;
+  readonly tag_keys: readonly KeyStr[];
+  readonly tier: BlogTier | null;
+  readonly difficulty: BlogDifficulty | null;
+  readonly prerequisites: readonly string[];
+  readonly canonical_url: string | null;
+  /** Editorial dates chosen by the author, distinct from operational timestamps. */
+  readonly published_on: string | null;
+  readonly content_updated_on: string | null;
+}
 
 export interface Category {
   readonly key: KeyStr;
@@ -49,8 +64,8 @@ export interface BlogSection {
   readonly char_end: number;
 }
 
-/** The list shape. No body, and no cover — see `shared/lib/cover`. */
-export interface BlogSummary {
+/** The list shape. Includes card metadata, never the body. */
+export interface BlogSummary extends BlogMetadata {
   readonly id: BlogId;
   readonly slug: KeyStr;
   readonly title: string;
@@ -67,7 +82,7 @@ export interface BlogSummary {
 }
 
 /** The read-one shape: metadata and structure, still not body text. */
-export interface BlogDetail {
+export interface BlogDetail extends BlogMetadata {
   readonly id: BlogId;
   readonly slug: KeyStr;
   readonly title: string;
@@ -95,9 +110,9 @@ export interface BlogDetail {
 /**
  * The article body.
  *
- * `markdown` is the stored `.md` byte-for-byte, with frontmatter already
- * stripped by the publish pipeline. There is no `cover:` or `tags:` key to
- * read here — they were parsed and discarded server-side.
+ * `markdown` is the canonical `.md` byte-for-byte, including frontmatter.
+ * The renderer hides that machine metadata; typed properties are read from
+ * summary/detail contracts rather than rediscovered in the browser.
  */
 export interface BlogContent {
   readonly blog_id: BlogId;

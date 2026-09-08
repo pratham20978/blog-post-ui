@@ -10,6 +10,19 @@ function section(anchor: string, ordinal: number, level = 2): BlogSection {
 }
 
 describe("Article", () => {
+  it("keeps canonical frontmatter out of the rendered article", () => {
+    const { container } = render(
+      <Article
+        markdown={"---\ntitle: Machine metadata\ntags: [internal]\n---\n\n## Visible\n\nBody."}
+        sections={[section("visible", 0)]}
+      />,
+    );
+
+    expect(container.textContent).toContain("Visible");
+    expect(container.textContent).not.toContain("Machine metadata");
+    expect(container.querySelector("h2")?.id).toBe("visible");
+  });
+
   it("gives headings the backend anchor verbatim, with no sanitiser prefix", () => {
     // The regression this exists for: with the plugins in the other order,
     // rehype-sanitize rewrites ids to `user-content-<anchor>` as a

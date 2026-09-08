@@ -114,20 +114,28 @@ async function handler(
   // would ask a different question: the replay's own 401 means the new token
   // was rejected too, and refreshing again from there is a loop.
   const expired = refresh !== undefined && (await isExpiredAccessToken(attempt));
-  let rotatedTokens: Awaited<ReturnType<typeof refreshTokens>> = null;
+  let refreshResult: Awaited<ReturnType<typeof refreshTokens>> | null = null;
 
   if (expired) {
-    rotatedTokens = await refreshTokens(refresh);
+    refreshResult = await refreshTokens(refresh);
 
-    if (rotatedTokens) {
+    if (refreshResult.status === "rotated") {
       try {
         attempt = await forward(request, target, body, {
-          access: rotatedTokens.access_token,
-          actor: rotatedTokens.actor_token,
+          access: refreshResult.pair.access_token,
+          actor: refreshResult.pair.actor_token,
         });
       } catch {
         return fail(502, "INTERNAL_ERROR", "Could not reach the API.", { stage: "ACCESS" });
       }
+    } else if (refreshResult.status === "unavailable") {
+      // Do not return the first attempt's expired-token 401: the browser would
+      // reasonably interpret it as a definitive logout even though the
+      // refresh credential was never rejected. A 503 keeps restoration
+      // neutral and lets AuthProvider retry without clearing either cookie.
+      return fail(503, "INTERNAL_ERROR", "Session restoration is temporarily unavailable.", {
+        stage: "ACCESS",
+      });
     }
   }
 
@@ -137,10 +145,18 @@ async function handler(
     headers: copyResponseHeaders(attempt.response.headers),
   });
 
-  if (rotatedTokens) {
-    response.cookies.set(COOKIE.access, rotatedTokens.access_token, cookieOptions.access());
-    response.cookies.set(COOKIE.refresh, rotatedTokens.refresh_token, cookieOptions.refresh());
-  } else if (expired) {
+  if (refreshResult?.status === "rotated") {
+    response.cookies.set(
+      COOKIE.access,
+      refreshResult.pair.access_token,
+      cookieOptions.access(),
+    );
+    response.cookies.set(
+      COOKIE.refresh,
+      refreshResult.pair.refresh_token,
+      cookieOptions.refresh(),
+    );
+  } else if (refreshResult?.status === "rejected") {
     // The refresh token itself is spent, expired or revoked. Clearing the pair
     // is what turns "every request 401s forever" into a visible signed-out
     // state the user can act on. The actor cookie stays: it is not a

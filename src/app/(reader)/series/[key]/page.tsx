@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 
 import {
   fetchCategories,
-  fetchCovers,
   fetchFeed,
   fetchSeries,
 } from "@/entities/blog/api/server";
@@ -42,7 +41,6 @@ export default async function SeriesDetailPage({ params }: { params: Params }) {
   ]);
 
   const ordered = seriesBlogs(feed.items, series.id);
-  const covers = await fetchCovers(ordered);
   const categoryLabels = new Map(categories.map((entry) => [entry.key, entry.label]));
 
   return (
@@ -105,7 +103,7 @@ export default async function SeriesDetailPage({ params }: { params: Params }) {
                   <MetaRow
                     className="mt-3"
                     items={[
-                      formatDateCompact(blog.published_at),
+                      formatDateCompact(blog.published_on ?? blog.published_at),
                       formatReadingTime(blog.reading_minutes),
                       blog.category_keys
                         .map((k) => categoryLabels.get(k))
@@ -117,7 +115,6 @@ export default async function SeriesDetailPage({ params }: { params: Params }) {
 
                 <BlogCover
                   blog={blog}
-                  cover={covers.get(blog.slug)}
                   sizes="200px"
                   className="col-span-2 aspect-[16/9] w-full sm:col-span-1 sm:w-[200px]"
                 />

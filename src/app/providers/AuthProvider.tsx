@@ -1,11 +1,14 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import {
   createContext,
   useCallback,
   useContext,
   useMemo,
+  useEffect,
+  useRef,
   useState,
   useTransition,
   type ReactNode,
@@ -67,7 +70,9 @@ export function AuthProvider({
   const [session, setSession] = useState<Session>(initialSession);
   const [isPending, startTransition] = useTransition();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { dataSource } = useConfig();
+  const restored = useRef(false);
 
   const clearIdentityCaches = useCallback(() => {
     for (const key of IDENTITY_SCOPED) {
@@ -75,7 +80,7 @@ export function AuthProvider({
     }
   }, [queryClient]);
 
-  const refresh = useCallback(async () => {
+  const probe = useCallback(async (): Promise<Session> => {
     try {
       // Sample mode answers locally; there is no backend to proxy to. The
       // shapes are identical, so nothing below this line branches.
@@ -91,21 +96,62 @@ export function AuthProvider({
       const body = (await response.json()) as APIResponse<MeResponse>;
 
       if (!body.success || !body.data) {
-        setSession({ status: "anonymous", actorId: null });
+        if (response.status >= 500) {
+          const restoring: Session = { status: "loading" };
+          setSession((current) =>
+            current.status === "loading" ? restoring : current,
+          );
+          return restoring;
+        }
+        const next: Session = { status: "anonymous", actorId: null };
+        setSession(next);
+        return next;
       } else if (isUser(body.data)) {
-        setSession({ status: "authenticated", user: body.data });
+        const next: Session = { status: "authenticated", user: body.data };
+        setSession(next);
+        return next;
       } else {
-        setSession({ status: "anonymous", actorId: body.data.actor_id });
+        const next: Session = { status: "anonymous", actorId: body.data.actor_id };
+        setSession(next);
+        return next;
       }
     } catch {
-      // A failed probe is not proof of being signed out — the network may
-      // simply be down. Leaving the last known session in place avoids
-      // throwing the user out of the UI over a dropped request.
-      return;
+      // Reachability is not evidence that a refresh cookie is invalid. Keep a
+      // restoring shell neutral; preserve an already known identity too.
+      const restoring: Session = { status: "loading" };
+      setSession((current) => (current.status === "loading" ? restoring : current));
+      return restoring;
     }
+  }, [dataSource]);
 
+  const refresh = useCallback(async () => {
+    await probe();
     clearIdentityCaches();
-  }, [clearIdentityCaches, dataSource]);
+  }, [clearIdentityCaches, probe]);
+
+  useEffect(() => {
+    if (initialSession.status !== "loading" || restored.current) return;
+    restored.current = true;
+    let cancelled = false;
+    let retryTimer: number | undefined;
+
+    const restore = async () => {
+      const next = await probe();
+      if (cancelled) return;
+      clearIdentityCaches();
+      if (next.status === "authenticated") {
+        router.refresh();
+      } else if (next.status === "loading") {
+        retryTimer = window.setTimeout(() => void restore(), 5_000);
+      }
+    };
+
+    void restore();
+    return () => {
+      cancelled = true;
+      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
+    };
+  }, [clearIdentityCaches, initialSession.status, probe, router]);
 
   const signOut = useCallback(
     async ({ allDevices = false }: { allDevices?: boolean } = {}) => {

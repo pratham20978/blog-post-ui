@@ -89,9 +89,8 @@ function sectionsFromMarkdown(markdown: string): readonly BlogSection[] {
 }
 
 /* ── Bodies ──────────────────────────────────────────────────────────────
- * Frontmatter already stripped, as the publish pipeline stores it. Only one
- * opens with an image, so both the derived-cover and the typographic-cover
- * paths are exercised by the feed.
+ * Fixture bodies omit frontmatter for readability. Fixtures include articles
+ * without covers so the typographic fallback stays visible.
  */
 
 const bodies: Readonly<Record<string, string>> = {
@@ -446,8 +445,28 @@ wrong.
  * series has nothing published (so it derives as "upcoming"), and titles vary
  * in length so the card layouts are exercised rather than flattered.
  */
+const EMPTY_METADATA = {
+  cover_image_url: null,
+  cover_image_alt: null,
+  tag_keys: [],
+  tier: null,
+  difficulty: null,
+  prerequisites: [],
+  canonical_url: null,
+  published_on: null,
+  content_updated_on: null,
+} as const;
+
 export const blogSummaries: readonly BlogSummary[] = [
   {
+    ...EMPTY_METADATA,
+    tag_keys: ["software-engineering", "publishing", "markdown"],
+    tier: "L1",
+    difficulty: "beginner",
+    prerequisites: ["Markdown basics"],
+    canonical_url: "https://canery.in/blogs/introducing-canerly",
+    published_on: "2026-08-18",
+    content_updated_on: "2026-08-18",
     id: id(9),
     slug: "introducing-canerly",
     title: "Introducing Canerly",
@@ -463,6 +482,7 @@ export const blogSummaries: readonly BlogSummary[] = [
     updated_at: "2026-08-18T09:00:00Z",
   },
   {
+    ...EMPTY_METADATA,
     id: id(8),
     slug: "retrieval-without-embeddings",
     title: "Retrieval Without Embeddings",
@@ -478,6 +498,7 @@ export const blogSummaries: readonly BlogSummary[] = [
     updated_at: "2026-08-12T14:20:00Z",
   },
   {
+    ...EMPTY_METADATA,
     id: id(7),
     slug: "the-cost-of-a-vector-database",
     title: "The Cost of a Vector Database",
@@ -492,6 +513,7 @@ export const blogSummaries: readonly BlogSummary[] = [
     updated_at: "2026-08-04T09:00:00Z",
   },
   {
+    ...EMPTY_METADATA,
     id: id(6),
     slug: "errors-are-a-contract",
     title: "Errors Are a Contract",
@@ -507,6 +529,7 @@ export const blogSummaries: readonly BlogSummary[] = [
     updated_at: "2026-07-28T09:00:00Z",
   },
   {
+    ...EMPTY_METADATA,
     id: id(5),
     slug: "keyset-pagination",
     title: "Keyset Pagination, and Why OFFSET Drifts",
@@ -522,6 +545,7 @@ export const blogSummaries: readonly BlogSummary[] = [
     updated_at: "2026-07-21T09:00:00Z",
   },
   {
+    ...EMPTY_METADATA,
     id: id(4),
     slug: "identity-before-the-account",
     title: "Identity Before the Account",
@@ -537,6 +561,7 @@ export const blogSummaries: readonly BlogSummary[] = [
     updated_at: "2026-07-15T11:00:00Z",
   },
   {
+    ...EMPTY_METADATA,
     id: id(3),
     slug: "one-comment-per-person",
     title: "One Comment Per Person",
@@ -551,6 +576,7 @@ export const blogSummaries: readonly BlogSummary[] = [
     updated_at: "2026-07-07T09:00:00Z",
   },
   {
+    ...EMPTY_METADATA,
     id: id(2),
     slug: "markdown-all-the-way-down",
     title: "Markdown All the Way Down",

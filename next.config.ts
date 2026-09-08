@@ -24,8 +24,8 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
 
   images: {
-    // Article covers are whatever URL the author put in the Markdown body, so
-    // the host set is not knowable ahead of time. Remote images are optimised
+    // Article covers are author-supplied metadata, so the host set is not
+    // knowable ahead of time. Remote images are optimised
     // over https only and never inlined as SVG (an SVG from an arbitrary host
     // is a script execution primitive).
     remotePatterns: [{ protocol: "https", hostname: "**" }],

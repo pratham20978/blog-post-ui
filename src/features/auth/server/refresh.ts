@@ -34,7 +34,12 @@ import type { APIResponse, TokenPair } from "@/shared/contracts";
 
 /** Keyed on the refresh token itself: two different tokens are two different
  *  families and must not share a result. */
-const inFlight = new Map<string, Promise<TokenPair | null>>();
+export type RefreshResult =
+  | { readonly status: "rotated"; readonly pair: TokenPair }
+  | { readonly status: "rejected" }
+  | { readonly status: "unavailable" };
+
+const inFlight = new Map<string, Promise<RefreshResult>>();
 
 /**
  * Results of recent successful refreshes, keyed by the token that was spent.
@@ -68,25 +73,22 @@ const MAX_GRACE_ENTRIES = 500;
 const recentlyRotated = new Map<string, { pair: TokenPair; at: number }>();
 
 /**
- * Spend a refresh token for a new pair, or `null` if it is no longer valid.
- *
- * `null` covers expiry, revocation and reuse alike. The caller's only sensible
- * response to any of them is the same — clear the cookies and treat the visitor
- * as signed out — so they are not distinguished here.
+ * Spend a refresh token for a new pair. Rejection is distinct from temporary
+ * unavailability: only a definitive 4xx may clear the browser's session.
  */
-export function refreshTokens(refreshToken: string): Promise<TokenPair | null> {
+export function refreshTokens(refreshToken: string): Promise<RefreshResult> {
   const rotated = recentlyRotated.get(refreshToken);
   if (rotated && Date.now() - rotated.at < GRACE_MS) {
-    return Promise.resolve(rotated.pair);
+    return Promise.resolve({ status: "rotated", pair: rotated.pair });
   }
 
   const existing = inFlight.get(refreshToken);
   if (existing) return existing;
 
   const attempt = exchange(refreshToken)
-    .then((pair) => {
-      if (pair) remember(refreshToken, pair);
-      return pair;
+    .then((result) => {
+      if (result.status === "rotated") remember(refreshToken, result.pair);
+      return result;
     })
     .finally(() => {
       // Removed once settled. A later request with the same token now finds
@@ -118,7 +120,7 @@ function remember(spent: string, pair: TokenPair): void {
   recentlyRotated.set(spent, { pair, at: now });
 }
 
-async function exchange(refreshToken: string): Promise<TokenPair | null> {
+async function exchange(refreshToken: string): Promise<RefreshResult> {
   let response: Response;
 
   try {
@@ -132,15 +134,21 @@ async function exchange(refreshToken: string): Promise<TokenPair | null> {
   } catch {
     // The API is unreachable. Not evidence the token is bad, but there is
     // nothing to return and the caller cannot proceed either way.
-    return null;
+    return { status: "unavailable" };
   }
 
-  if (!response.ok) return null;
+  if (!response.ok) {
+    return response.status >= 400 && response.status < 500
+      ? { status: "rejected" }
+      : { status: "unavailable" };
+  }
 
   try {
     const body = (await response.json()) as APIResponse<TokenPair>;
-    return body.success && body.data ? body.data : null;
+    return body.success && body.data
+      ? { status: "rotated", pair: body.data }
+      : { status: "unavailable" };
   } catch {
-    return null;
+    return { status: "unavailable" };
   }
 }

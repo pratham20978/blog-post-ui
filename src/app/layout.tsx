@@ -3,6 +3,7 @@ import { Inter, Newsreader } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { getServerSession } from "@/features/auth/server/session";
+import { getOAuthProviders } from "@/features/auth/server/providers";
 import { readServerConfig } from "@/shared/config";
 
 import { AppProviders } from "./providers/AppProviders";
@@ -58,7 +59,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const session = await getServerSession();
+  const [session, oauthProviders] = await Promise.all([
+    getServerSession(),
+    getOAuthProviders(),
+  ]);
+  const runtimeConfig = { ...readServerConfig(), oauthProviders };
 
   return (
     // `suppressHydrationWarning` is required and narrow: the inline script
@@ -86,7 +91,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           Skip to content
         </a>
 
-        <AppProviders config={config} initialSession={session}>
+        <AppProviders config={runtimeConfig} initialSession={session}>
           {children}
         </AppProviders>
       </body>

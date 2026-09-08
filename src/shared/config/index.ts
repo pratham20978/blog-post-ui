@@ -63,15 +63,6 @@ export function dataSource(): DataSource {
 /** Server-side only. Calling this from a client component is a build error in
  *  practice, because `process.env` is not populated there. */
 export function readServerConfig(): AppConfig {
-  // Defaults to none. Offering a provider the backend has no credentials for
-  // produces a 404 `OAUTH_PROVIDER_UNKNOWN` at the worst possible moment —
-  // after the user has committed to signing in — so the buttons appear only
-  // once this names a provider that actually works.
-  const providers = (process.env.NEXT_PUBLIC_OAUTH_PROVIDERS ?? "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter((value): value is OAuthProviderName => value === "google" || value === "github");
-
   const adapter = process.env.NEXT_PUBLIC_SEARCH_ADAPTER;
 
   return {
@@ -79,7 +70,8 @@ export function readServerConfig(): AppConfig {
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
     searchAdapter: adapter === "http" || adapter === "mock" ? adapter : "none",
     dataSource: dataSource(),
-    oauthProviders: providers,
+    // Filled from the backend capability endpoint by the root layout.
+    oauthProviders: [],
     devOtpCode: devOtpCode(),
   };
 }

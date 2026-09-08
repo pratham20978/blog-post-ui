@@ -11,7 +11,8 @@ import {
 } from "@/entities/blog/api/server";
 import { nextBlog } from "@/entities/blog/model/selectors";
 import { BlogCover } from "@/entities/blog/ui/BlogCover";
-import { extractCover } from "@/shared/lib/cover";
+import { ReadingPositionProvider } from "@/features/marker/model/ReadingPositionProvider";
+import { ReadingMarker } from "@/features/marker/ui/ReadingMarker";
 import { formatDate, formatReadingTime, toDateAttribute } from "@/shared/lib/date";
 import { Article } from "@/shared/lib/markdown";
 import { Container, Eyebrow, MetaRow, Rule } from "@/shared/ui/primitives";
@@ -24,6 +25,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const blog = await fetchBlog(slug);
 
   if (!blog) return { title: "Not found" };
+  const published = blog.published_on ?? blog.published_at;
+  const updated = blog.content_updated_on ?? blog.updated_at;
 
   return {
     title: blog.title,
@@ -32,10 +35,24 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       type: "article",
       title: blog.title,
       description: blog.summary ?? undefined,
-      publishedTime: blog.published_at ?? undefined,
-      modifiedTime: blog.updated_at,
+      publishedTime: published ?? undefined,
+      modifiedTime: updated,
+      images:
+        blog.cover_image_url && blog.cover_image_alt
+          ? [{ url: blog.cover_image_url, alt: blog.cover_image_alt }]
+          : undefined,
     },
-    alternates: { canonical: `/blogs/${blog.slug}` },
+    twitter: {
+      card: blog.cover_image_url ? "summary_large_image" : "summary",
+      title: blog.title,
+      description: blog.summary ?? undefined,
+      images:
+        blog.cover_image_url && blog.cover_image_alt
+          ? [{ url: blog.cover_image_url, alt: blog.cover_image_alt }]
+          : undefined,
+    },
+    keywords: [...blog.tag_keys],
+    alternates: { canonical: blog.canonical_url ?? `/blogs/${blog.slug}` },
   };
 }
 
@@ -59,6 +76,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
 
   const categoryLabels = new Map(categories.map((entry) => [entry.key, entry.label]));
   const currentSeries = series.find((entry) => entry.id === blog.series_id) ?? null;
+  const editorialPublished = blog.published_on ?? blog.published_at;
 
   // Read directly rather than through `/api/blogs/[slug]/next`: this is a
   // Server Component, and calling our own origin over HTTP would add a round
@@ -70,22 +88,20 @@ export default async function ArticlePage({ params }: { params: Params }) {
   // that is the point at which this block moves client-side onto the route.
   const next = nextBlog(feed.items, blog);
 
-  const cover = content ? extractCover(content.markdown, blog.title) : null;
-
   const labels = blog.category_keys
     .map((key) => categoryLabels.get(key))
     .filter((value): value is string => Boolean(value));
 
   return (
     <article>
-      {/* Hero. Only shown when the body actually opens with an image — a
+      <ReadingPositionProvider sections={blog.sections}>
+      {/* Hero. Only shown when the article has typed cover metadata — a
           generated cover at full bleed above the title would be a large grey
           slab, which is worse than no hero at all. */}
-      {cover && (
+      {blog.cover_image_url && blog.cover_image_alt && (
         <Container width="wide" className="pt-8">
           <BlogCover
             blog={blog}
-            cover={cover}
             priority
             sizes="(min-width: 1280px) 1200px, 100vw"
             className="aspect-[21/9] w-full"
@@ -110,9 +126,9 @@ export default async function ArticlePage({ params }: { params: Params }) {
           <MetaRow
             className="mt-6"
             items={[
-              blog.published_at ? (
-                <time key="date" dateTime={toDateAttribute(blog.published_at)}>
-                  {formatDate(blog.published_at)}
+              editorialPublished ? (
+                <time key="date" dateTime={toDateAttribute(editorialPublished)}>
+                  {formatDate(editorialPublished)}
                 </time>
               ) : null,
               formatReadingTime(blog.reading_minutes),
@@ -121,6 +137,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
                 : currentSeries?.title,
             ]}
           />
+          <ReadingMarker blogId={blog.id} />
         </header>
 
         <Rule className="mx-auto mt-10 max-w-[var(--measure)]" />
@@ -173,7 +190,9 @@ export default async function ArticlePage({ params }: { params: Params }) {
               <MetaRow
                 className="mt-3"
                 items={[
-                  next.blog.published_at ? formatDate(next.blog.published_at) : null,
+                  next.blog.published_on ?? next.blog.published_at
+                    ? formatDate(next.blog.published_on ?? next.blog.published_at)
+                    : null,
                   formatReadingTime(next.blog.reading_minutes),
                 ]}
               />
@@ -181,6 +200,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
           </nav>
         )}
       </Container>
+      </ReadingPositionProvider>
     </article>
   );
 }

@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import {
   fetchCategories,
-  fetchCovers,
   fetchFeed,
   fetchSeries,
 } from "@/entities/blog/api/server";
@@ -32,8 +31,6 @@ export default async function BlogsPage({
   ]);
 
   const sections = deriveFeedSections(feed.items, series);
-  const covers = await fetchCovers(sections.all);
-
   const categoryLabels = new Map(categories.map((entry) => [entry.key, entry.label]));
   const seriesTitles = new Map(series.map((entry) => [entry.id, entry.title]));
 
@@ -84,7 +81,6 @@ export default async function BlogsPage({
             blog={sections.featured}
             variant="feature"
             eyebrow="Featured"
-            cover={covers.get(sections.featured.slug)}
             categoryLabels={categoryLabels}
             seriesTitle={titleFor(sections.featured.series_id)}
             priority
@@ -104,7 +100,6 @@ export default async function BlogsPage({
                   blog={blog}
                   variant="compact"
                   position={index}
-                  cover={covers.get(blog.slug)}
                   categoryLabels={categoryLabels}
                   seriesTitle={titleFor(blog.series_id)}
                 />
@@ -146,7 +141,6 @@ export default async function BlogsPage({
                   key={blog.id}
                   blog={blog}
                   variant="compact"
-                  cover={covers.get(blog.slug)}
                   categoryLabels={categoryLabels}
                   seriesTitle={sections.currentSeries?.series.title}
                   className="w-[78vw] shrink-0 snap-start sm:w-auto"
@@ -194,7 +188,6 @@ export default async function BlogsPage({
                 blog={blog}
                 variant="split"
                 position={index}
-                cover={covers.get(blog.slug)}
                 categoryLabels={categoryLabels}
                 seriesTitle={titleFor(blog.series_id)}
               />

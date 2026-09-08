@@ -12,8 +12,6 @@ import type {
   Page,
   Series,
 } from "@/shared/contracts";
-import { extractCover, type DerivedCover } from "@/shared/lib/cover";
-
 import { blogContents, blogSummaries, detailFor } from "@/shared/fixtures/blogs";
 import { categories as fixtureCategories, series as fixtureSeries } from "@/shared/fixtures/taxonomy";
 
@@ -121,35 +119,4 @@ export async function fetchSeries(): Promise<readonly Series[]> {
       tags: ["taxonomy"],
     })) ?? []
   );
-}
-
-/**
- * Resolve cover images for a set of cards.
- *
- * The feed carries no body, and there is no media field on the API, so the
- * only place a cover can come from is the first image in the Markdown — which
- * means one content fetch per card. Three things keep that affordable:
- *
- *   the requests run in parallel, not in series;
- *   each is tagged and revalidated, so Next's data cache serves repeats;
- *   the backend already sets a strong ETag and `max-age=60` on this route.
- *
- * A failure yields null rather than propagating: a missing cover falls back to
- * the typographic one, and no card should be able to take down the feed.
- */
-export async function fetchCovers(
-  blogs: readonly BlogSummary[],
-): Promise<ReadonlyMap<string, DerivedCover | null>> {
-  const entries = await Promise.all(
-    blogs.map(async (blog): Promise<[string, DerivedCover | null]> => {
-      try {
-        const content = await fetchContent(blog.slug);
-        return [blog.slug, content ? extractCover(content.markdown, blog.title) : null];
-      } catch {
-        return [blog.slug, null];
-      }
-    }),
-  );
-
-  return new Map(entries);
 }

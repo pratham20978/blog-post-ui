@@ -65,7 +65,9 @@ describe("refreshTokens", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     // Every caller must get the same pair, or the ones that missed out would
     // write a stale token back into the cookie.
-    for (const result of results) expect(result).toEqual(pair("new"));
+    for (const result of results) {
+      expect(result).toEqual({ status: "rotated", pair: pair("new") });
+    }
   });
 
   it("serves a late arrival still holding the token that was just spent", async () => {
@@ -82,7 +84,7 @@ describe("refreshTokens", () => {
     const late = await refreshTokens("token-1");
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(late).toEqual(pair("new"));
+    expect(late).toEqual({ status: "rotated", pair: pair("new") });
   });
 
   it("stops serving from grace once the window has passed", async () => {
@@ -106,29 +108,29 @@ describe("refreshTokens", () => {
 
     // Two different families. Sharing a result here would hand one session's
     // tokens to another.
-    expect(await refreshTokens("token-a")).toEqual(pair("a"));
-    expect(await refreshTokens("token-b")).toEqual(pair("b"));
+    expect(await refreshTokens("token-a")).toEqual({ status: "rotated", pair: pair("a") });
+    expect(await refreshTokens("token-b")).toEqual({ status: "rotated", pair: pair("b") });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("returns null without caching when the token is rejected", async () => {
+  it("returns rejected without caching when the token is rejected", async () => {
     const { refreshTokens } = await loadModule();
     fetchMock.mockImplementation(
       () => Promise.resolve(new Response("{}", { status: 401 })),
     );
 
-    expect(await refreshTokens("token-1")).toBeNull();
+    expect(await refreshTokens("token-1")).toEqual({ status: "rejected" });
 
     // A failure must not be remembered: the next caller gets a real attempt
     // rather than a cached "no", which would outlive the cause.
-    expect(await refreshTokens("token-1")).toBeNull();
+    expect(await refreshTokens("token-1")).toEqual({ status: "rejected" });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("returns null when the API is unreachable", async () => {
+  it("preserves a refreshable session when the API is unreachable", async () => {
     const { refreshTokens } = await loadModule();
     fetchMock.mockImplementation(() => Promise.reject(new Error("ECONNREFUSED")));
 
-    await expect(refreshTokens("token-1")).resolves.toBeNull();
+    await expect(refreshTokens("token-1")).resolves.toEqual({ status: "unavailable" });
   });
 });

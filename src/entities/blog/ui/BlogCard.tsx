@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import type { BlogSummary } from "@/shared/contracts";
 import { cn } from "@/shared/lib/cn";
-import type { DerivedCover } from "@/shared/lib/cover";
 import { formatDateCompact, formatReadingTime, toDateAttribute } from "@/shared/lib/date";
 import { Eyebrow, MetaRow } from "@/shared/ui/primitives";
 
@@ -13,8 +12,6 @@ export type BlogCardVariant = "feature" | "split" | "compact";
 export interface BlogCardProps {
   blog: BlogSummary;
   variant?: BlogCardVariant;
-  /** Derived upstream from the Markdown body; null renders a typographic cover. */
-  cover?: DerivedCover | null;
   /** Category keys resolved to human labels. Unmapped keys are skipped rather
    *  than shown raw — `open-source` in a card reads as a bug. */
   categoryLabels?: ReadonlyMap<string, string>;
@@ -46,7 +43,6 @@ export interface BlogCardProps {
 export function BlogCard({
   blog,
   variant = "split",
-  cover,
   categoryLabels,
   seriesTitle,
   eyebrow,
@@ -64,11 +60,12 @@ export function BlogCard({
     blog.category_keys
       .map((key) => categoryLabels?.get(key))
       .find((value): value is string => Boolean(value));
+  const editorialPublished = blog.published_on ?? blog.published_at;
 
   const meta = [
-    blog.published_at ? (
-      <time key="date" dateTime={toDateAttribute(blog.published_at)}>
-        {formatDateCompact(blog.published_at)}
+    editorialPublished ? (
+      <time key="date" dateTime={toDateAttribute(editorialPublished)}>
+        {formatDateCompact(editorialPublished)}
       </time>
     ) : null,
     formatReadingTime(blog.reading_minutes),
@@ -96,17 +93,21 @@ export function BlogCard({
           rather than as design — so an article with no image leads with its
           title instead, which is the stronger editorial choice anyway.
         */}
-        {cover && (
+        {blog.cover_image_url && blog.cover_image_alt && (
           <BlogCover
             blog={blog}
-            cover={cover}
             priority={priority}
             sizes="(min-width: 1280px) 1200px, 100vw"
             className="aspect-[16/9] w-full"
           />
         )}
 
-        <div className={cn("max-w-3xl", cover && "mt-6")}>
+        <div
+          className={cn(
+            "max-w-3xl",
+            blog.cover_image_url && blog.cover_image_alt && "mt-6",
+          )}
+        >
           {label && <Eyebrow>{label}</Eyebrow>}
           <h2 className="mt-3 text-display font-semibold leading-display tracking-display text-fg transition-colors group-hover:text-fg-subtle">
             {blog.title}
@@ -129,7 +130,6 @@ export function BlogCard({
       >
         <BlogCover
           blog={blog}
-          cover={cover}
           sizes="(min-width: 768px) 320px, 80vw"
           className="aspect-[16/9] w-full"
         />
@@ -158,7 +158,6 @@ export function BlogCard({
     >
       <BlogCover
         blog={blog}
-        cover={cover}
         sizes="(min-width: 640px) 65vw, 100vw"
         className="aspect-[16/9] w-full"
       />

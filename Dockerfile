@@ -10,6 +10,13 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 
+FROM deps AS development
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
+EXPOSE 3000
+CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
+
+
 FROM node:24-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -21,7 +28,6 @@ COPY . .
 ARG NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ARG NEXT_PUBLIC_SITE_NAME=Canerly
 ARG NEXT_PUBLIC_SEARCH_ADAPTER=none
-ARG NEXT_PUBLIC_OAUTH_PROVIDERS=
 
 # `next build` runs every route once to decide what can be prerendered, so a
 # build with BLOGS_DATA_SOURCE=api fails outright when the FastAPI backend is
@@ -37,7 +43,6 @@ ENV BLOGS_DATA_SOURCE=$BLOGS_DATA_SOURCE \
     NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
     NEXT_PUBLIC_SITE_NAME=$NEXT_PUBLIC_SITE_NAME \
     NEXT_PUBLIC_SEARCH_ADAPTER=$NEXT_PUBLIC_SEARCH_ADAPTER \
-    NEXT_PUBLIC_OAUTH_PROVIDERS=$NEXT_PUBLIC_OAUTH_PROVIDERS \
     NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build

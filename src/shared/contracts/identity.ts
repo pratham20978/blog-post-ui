@@ -102,6 +102,7 @@ export interface OtpRequestAccepted {
 export interface OtpVerifyBody {
   readonly email: string;
   readonly code: string;
+  readonly purpose: AuthPurpose;
 }
 
 export interface RevokeBody {

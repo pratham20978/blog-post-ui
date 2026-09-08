@@ -103,7 +103,7 @@ export function AuthForm({ purpose }: { purpose: AuthPurpose }) {
       const response = await fetch(localRoutes.otpVerify(), {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, code: submitted }),
+        body: JSON.stringify({ email, code: submitted, purpose }),
       });
       const body = (await response.json()) as APIResponse<unknown>;
 
@@ -157,11 +157,6 @@ export function AuthForm({ purpose }: { purpose: AuthPurpose }) {
     return (
       <div>
         <h1 className="text-title font-semibold tracking-title">Check your email</h1>
-        {/*
-          Three states, not two. There is no email adapter yet, so "we sent you
-          a code" is only true once one exists — saying it while nothing was
-          sent leaves the reader waiting on an email that is never coming.
-        */}
         <p className="mt-3 text-[0.9375rem] text-muted">
           {devOtpCode ? (
             <>
@@ -171,7 +166,8 @@ export function AuthForm({ purpose }: { purpose: AuthPurpose }) {
             </>
           ) : (
             <>
-              We sent a six-digit code to <span className="text-fg">{email}</span>.
+              We sent a six-digit {signingUp ? "signup" : "sign-in"} code to{" "}
+              <span className="text-fg">{email}</span>.
             </>
           )}
         </p>

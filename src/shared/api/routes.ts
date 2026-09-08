@@ -22,6 +22,7 @@ export const routes = {
   // ── Auth ────────────────────────────────────────────────────────────────
   otpRequest: () => "/auth/otp/request",
   otpVerify: () => "/auth/otp/verify",
+  oauthProviders: () => "/auth/oauth/providers",
   oauthStart: (provider: string) => `/auth/oauth/${encodeURIComponent(provider)}/start`,
   oauthCallback: (provider: string) => `/auth/oauth/${encodeURIComponent(provider)}/callback`,
   refresh: () => "/auth/refresh",

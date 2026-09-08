@@ -81,9 +81,8 @@ BLOGS_API_URL=http://localhost:8000
 cd .. && BLOGS_DEBUG=true uv run uvicorn blogs.main:app --reload --port 8000
 ```
 
-`BLOGS_DEBUG=true` matters for two reasons: CORS middleware is only registered
-in debug (`src/blogs/main.py:81`), and it enables the OTP dev log described
-below.
+`BLOGS_DEBUG=true` enables CORS middleware (`src/blogs/main.py:81`). It does not
+enable OTP logging; real Resend delivery requires that logging to remain off.
 
 ### Things about this API worth knowing before you touch it
 
@@ -148,25 +147,13 @@ articles are real and a fixed code would be an unauthenticated sign-in as
 anyone. It fails closed rather than falling back, so a misconfigured deployment
 cannot accidentally accept it.
 
-## Known limitation: OTP codes cannot be delivered
+## Email OTP delivery
 
-There is no email adapter — that is F2 (`../src/docs/04_email_pipeline.md`) and
-it is unbuilt. `request_otp` writes an outbox event and, **in dev only**, logs
-the code:
-
-```
-DEV ONLY — OTP for you@example.com is 123456
-```
-
-That log is gated by `otp_log_codes`, which production refuses to enable. So
-today:
-
-- **Against the real API, OAuth is the only sign-in that works end to end.**
-- Email OTP is testable in development by reading the backend's console.
-- Email OTP is **not usable in production** until F2 ships.
-
-The UI is built correctly for both paths. The gap is delivery, and it belongs
-to the backend.
+The API sends signup and login codes through Resend and advances the UI only
+after the provider accepts the message. Configure a verified sender and keep
+`BLOGS_OTP_LOG_CODES=false` with no `BLOGS_OTP_DEV_BYPASS_CODE`. The generated
+code exists only in the email: the API response, browser configuration, outbox
+event, and stored challenge never contain it in plaintext.
 
 ## Other deliberate omissions
 

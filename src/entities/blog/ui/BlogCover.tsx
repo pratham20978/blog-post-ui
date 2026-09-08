@@ -2,39 +2,39 @@ import Image from "next/image";
 
 import type { BlogSummary } from "@/shared/contracts";
 import { cn } from "@/shared/lib/cn";
-import { typographicCover, type DerivedCover } from "@/shared/lib/cover";
+import { typographicCover } from "@/shared/lib/cover";
 
 /**
  * The image on a card or at the top of an article.
  *
  * Two paths, and the second is not a degraded version of the first: when an
- * article's Markdown carries no image we set its initials large on a flat
+ * article has no typed cover metadata we set its initials large on a flat
  * field. On a black-and-white site that is a real cover, and it keeps the feed
  * from looking half-broken whenever an author writes a piece without a
  * diagram.
  */
 export function BlogCover({
   blog,
-  cover,
   className,
   sizes = "100vw",
   priority = false,
 }: {
-  blog: Pick<BlogSummary, "slug" | "title">;
-  /** Extracted from the body upstream. Null renders the typographic cover. */
-  cover?: DerivedCover | null;
+  blog: Pick<
+    BlogSummary,
+    "slug" | "title" | "cover_image_url" | "cover_image_alt"
+  >;
   className?: string;
   /** Tell the browser the rendered width so it fetches the right file. */
   sizes?: string;
   /** Set only on the feed's lead image — it is the LCP element. */
   priority?: boolean;
 }) {
-  if (cover) {
+  if (blog.cover_image_url && blog.cover_image_alt) {
     return (
       <div className={cn("relative overflow-hidden bg-surface", className)}>
         <Image
-          src={cover.src}
-          alt={cover.alt}
+          src={blog.cover_image_url}
+          alt={blog.cover_image_alt}
           fill
           sizes={sizes}
           priority={priority}

@@ -7,7 +7,7 @@ import { fail, ok } from "@/shared/api/responses";
 import { routes } from "@/shared/api/routes";
 import { serverFetch } from "@/shared/api/server";
 import { DEMO_OTP_CODE } from "@/shared/config";
-import type { TokenPair, User } from "@/shared/contracts";
+import type { AuthPurpose, TokenPair, User } from "@/shared/contracts";
 
 /**
  * `POST /api/auth/otp-verify` — exchange a code for a session.
@@ -27,7 +27,7 @@ import type { TokenPair, User } from "@/shared/contracts";
  *   invented reader against invented articles.
  */
 export async function POST(request: Request) {
-  let body: { email?: unknown; code?: unknown };
+  let body: { email?: unknown; code?: unknown; purpose?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -36,6 +36,7 @@ export async function POST(request: Request) {
 
   const email = typeof body.email === "string" ? body.email.trim() : "";
   const code = typeof body.code === "string" ? body.code.trim() : "";
+  const purpose = body.purpose === undefined ? "login" : body.purpose;
 
   if (!email.includes("@")) {
     return fail(400, "REQUEST_INVALID", "Enter a valid email address.", {
@@ -43,7 +44,15 @@ export async function POST(request: Request) {
     });
   }
 
-  return demoAuthEnabled() ? demoSignIn(email, code) : apiSignIn(email, code);
+  if (purpose !== "login" && purpose !== "signup") {
+    return fail(400, "REQUEST_INVALID", "Choose a valid authentication purpose.", {
+      details: { fields: [{ field: "purpose", reason: "INVALID" }] },
+    });
+  }
+
+  return demoAuthEnabled()
+    ? demoSignIn(email, code)
+    : apiSignIn(email, code, purpose);
 }
 
 /**
@@ -53,13 +62,13 @@ export async function POST(request: Request) {
  * read before signing in to the new account — the merge that makes a fresh
  * account not-cold. It arrives back rotated, and all three are written here.
  */
-async function apiSignIn(email: string, code: string) {
+async function apiSignIn(email: string, code: string, purpose: AuthPurpose) {
   let tokens: TokenPair;
 
   try {
     tokens = await serverFetch<TokenPair>(routes.otpVerify(), {
       method: "POST",
-      body: { email, code },
+      body: { email, code, purpose },
     });
   } catch (cause) {
     if (cause instanceof ApiError) {

@@ -41,6 +41,15 @@ export function AccountMenu() {
     };
   }, [open]);
 
+  if (session.status === "loading") {
+    return (
+      <span
+        aria-label="Restoring session"
+        className="inline-block h-8 w-8 animate-pulse rounded-full bg-surface"
+      />
+    );
+  }
+
   if (session.status !== "authenticated") {
     return (
       <Link

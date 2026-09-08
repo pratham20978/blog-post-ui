@@ -68,10 +68,16 @@ export function Article({
         rehypePlugins={[[rehypeSanitize, schema], rehypeBackendAnchors(sections)]}
         components={components}
       >
-        {markdown}
+        {articleBody(markdown)}
       </ReactMarkdown>
     </div>
   );
+}
+
+/** MinIO retains the canonical file byte-for-byte so metadata can be
+ * backfilled later. Frontmatter is machine metadata, not article prose. */
+function articleBody(markdown: string): string {
+  return markdown.replace(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/, "");
 }
 
 /**
