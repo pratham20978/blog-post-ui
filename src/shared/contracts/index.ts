@@ -3,3 +3,4 @@ export * from "./blog";
 export * from "./identity";
 export * from "./interaction";
 export * from "./engagement";
+export * from "./announcement";

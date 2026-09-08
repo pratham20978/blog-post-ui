@@ -77,6 +77,8 @@ export interface BlogSummary extends BlogMetadata {
   readonly word_count: number;
   /** Computed by the database at 238 wpm. Do not recompute it. */
   readonly reading_minutes: number;
+  readonly member_view_count: number;
+  readonly like_count: number;
   readonly published_at: IsoDateTime | null;
   readonly updated_at: IsoDateTime;
 }
@@ -102,6 +104,8 @@ export interface BlogDetail extends BlogMetadata {
   readonly content_sha256: string;
   readonly word_count: number;
   readonly reading_minutes: number;
+  readonly member_view_count: number;
+  readonly like_count: number;
   readonly published_at: IsoDateTime | null;
   readonly created_at: IsoDateTime;
   readonly updated_at: IsoDateTime;

@@ -98,6 +98,7 @@ function observeProgress(
   onReaderMove?: () => void,
 ): () => void {
   let frame = 0;
+  let lastReaderInput = Number.NEGATIVE_INFINITY;
   const schedule = () => {
     if (frame) return;
     frame = window.requestAnimationFrame(() => {
@@ -105,15 +106,36 @@ function observeProgress(
       update();
     });
   };
+  const noteReaderInput = () => {
+    lastReaderInput = performance.now();
+  };
+  const keydown = (event: KeyboardEvent) => {
+    if (
+      ["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "].includes(
+        event.key,
+      )
+    ) {
+      noteReaderInput();
+    }
+  };
   const scroll = () => {
-    onReaderMove?.();
+    // Browser restoration, hash navigation and scripts can all cause scroll
+    // events. Only treat the movement as reader initiated when it follows a
+    // wheel, touch, or scrolling-key gesture.
+    if (performance.now() - lastReaderInput <= 1_000) onReaderMove?.();
     schedule();
   };
 
   update();
+  window.addEventListener("wheel", noteReaderInput, { passive: true });
+  window.addEventListener("touchmove", noteReaderInput, { passive: true });
+  window.addEventListener("keydown", keydown);
   window.addEventListener("scroll", scroll, { passive: true });
   window.addEventListener("resize", schedule);
   return () => {
+    window.removeEventListener("wheel", noteReaderInput);
+    window.removeEventListener("touchmove", noteReaderInput);
+    window.removeEventListener("keydown", keydown);
     window.removeEventListener("scroll", scroll);
     window.removeEventListener("resize", schedule);
     if (frame) window.cancelAnimationFrame(frame);

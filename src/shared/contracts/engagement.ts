@@ -5,6 +5,7 @@ import type { BlogId } from "./common";
 export type EngagementKind =
   | "impression"
   | "click"
+  | "read"
   | "dwell"
   | "complete"
   | "save"
@@ -50,4 +51,11 @@ export interface RecordEngagementCommand {
  *  at-least-once beacons, not a fault. */
 export interface EngagementAccepted {
   readonly recorded: boolean;
+}
+
+export interface BlogEngagementSummary {
+  readonly blog_id: BlogId;
+  readonly member_view_count: number;
+  readonly like_count: number;
+  readonly liked_by_me: boolean | null;
 }

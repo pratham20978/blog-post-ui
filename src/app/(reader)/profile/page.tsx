@@ -4,10 +4,17 @@ import Link from "next/link";
 import { fetchFeedSafe } from "@/entities/blog/api/server";
 import { getServerSession } from "@/features/auth/server/session";
 import { SignOutButtons } from "@/features/auth/ui/SignOutButtons";
+import { EmailPreferenceControl } from "@/features/announcement/ui/EmailPreferenceControl";
 import { routes } from "@/shared/api/routes";
 import { serverFetchOptional } from "@/shared/api/server";
 import { dataSource } from "@/shared/config";
-import type { BlogSummary, Catalog, Marker, RecentView } from "@/shared/contracts";
+import type {
+  BlogEmailPreference,
+  BlogSummary,
+  Catalog,
+  Marker,
+  RecentView,
+} from "@/shared/contracts";
 import { formatDate, formatRelative } from "@/shared/lib/date";
 import { ButtonLink } from "@/shared/ui/Button";
 import { Container, Eyebrow, Rule, SectionHeading } from "@/shared/ui/primitives";
@@ -55,13 +62,24 @@ export default async function ProfilePage() {
   // The feed is fetched alongside them because `Marker` carries only a
   // `blog_id` — no title, no slug — and there is no get-blog-by-id route. The
   // feed is the only way to turn a marker into something a reader recognises.
-  const [markers, catalogs, recent, feed] = usingFixtures
-    ? ([[], [], [], { items: [] }] as const)
+  const [markers, catalogs, recent, feed, emailPreference] = usingFixtures
+    ? ([
+        [],
+        [],
+        [],
+        { items: [] },
+        {
+          user_id: user.id,
+          blog_announcements_enabled: true,
+          updated_at: user.updated_at,
+        },
+      ] as const)
     : await Promise.all([
         serverFetchOptional<readonly Marker[]>(routes.markers()).then((v) => v ?? []),
         serverFetchOptional<readonly Catalog[]>(routes.catalogs()).then((v) => v ?? []),
         serverFetchOptional<readonly RecentView[]>(routes.recentViews()).then((v) => v ?? []),
         fetchFeedSafe({ limit: 100 }),
+        serverFetchOptional<BlogEmailPreference>(routes.emailPreferences()),
       ]);
 
   const blogsById = new Map(feed.items.map((blog) => [blog.id, blog]));
@@ -197,6 +215,15 @@ export default async function ProfilePage() {
           </ul>
         )}
       </section>
+
+      <Rule className="mt-12" />
+
+      {emailPreference && (
+        <section aria-labelledby="email-preferences" className="mt-12">
+          <SectionHeading id="email-preferences">Email preferences</SectionHeading>
+          <EmailPreferenceControl initialPreference={emailPreference} />
+        </section>
+      )}
 
       <Rule className="mt-12" />
 

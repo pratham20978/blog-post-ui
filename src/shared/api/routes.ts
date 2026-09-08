@@ -31,7 +31,13 @@ export const routes = {
 
   // ── Engagement ──────────────────────────────────────────────────────────
   engagement: () => "/engagement",
+  blogEngagement: (blogId: BlogId) =>
+    `/blogs/${encodeURIComponent(blogId)}/engagement`,
+  blogLike: (blogId: BlogId) => `/blogs/${encodeURIComponent(blogId)}/like`,
   recentViews: () => "/me/recent",
+  emailPreferences: () => "/me/email-preferences",
+  unsubscribe: (token: string) =>
+    `/email/preferences/unsubscribe?token=${encodeURIComponent(token)}`,
 
   // ── Comments ────────────────────────────────────────────────────────────
   // Note these take a blog *id*, not a slug — unlike every read route above.

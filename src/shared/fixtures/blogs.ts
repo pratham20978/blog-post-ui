@@ -455,6 +455,8 @@ const EMPTY_METADATA = {
   canonical_url: null,
   published_on: null,
   content_updated_on: null,
+  member_view_count: 0,
+  like_count: 0,
 } as const;
 
 export const blogSummaries: readonly BlogSummary[] = [

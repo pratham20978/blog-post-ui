@@ -69,6 +69,8 @@ export function BlogCard({
       </time>
     ) : null,
     formatReadingTime(blog.reading_minutes),
+    `${formatCount(blog.member_view_count)} views`,
+    `${formatCount(blog.like_count)} likes`,
     seriesTitle && blog.series_position
       ? `${seriesTitle} · ${blog.series_position}`
       : seriesTitle,
@@ -175,5 +177,11 @@ export function BlogCard({
         <MetaRow items={meta} className="mt-4" />
       </div>
     </Link>
+  );
+}
+
+function formatCount(value: number): string {
+  return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(
+    value,
   );
 }

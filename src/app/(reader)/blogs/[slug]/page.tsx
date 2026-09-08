@@ -13,6 +13,7 @@ import { nextBlog } from "@/entities/blog/model/selectors";
 import { BlogCover } from "@/entities/blog/ui/BlogCover";
 import { ReadingPositionProvider } from "@/features/marker/model/ReadingPositionProvider";
 import { ReadingMarker } from "@/features/marker/ui/ReadingMarker";
+import { ArticleEngagement } from "@/features/engagement/ui/ArticleEngagement";
 import { formatDate, formatReadingTime, toDateAttribute } from "@/shared/lib/date";
 import { Article } from "@/shared/lib/markdown";
 import { Container, Eyebrow, MetaRow, Rule } from "@/shared/ui/primitives";
@@ -136,6 +137,11 @@ export default async function ArticlePage({ params }: { params: Params }) {
                 ? `${currentSeries.title} · Part ${blog.series_position}`
                 : currentSeries?.title,
             ]}
+          />
+          <ArticleEngagement
+            blogId={blog.id}
+            initialMemberViews={blog.member_view_count}
+            initialLikes={blog.like_count}
           />
           <ReadingMarker blogId={blog.id} />
         </header>
