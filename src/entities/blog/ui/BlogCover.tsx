@@ -4,6 +4,8 @@ import type { BlogSummary } from "@/shared/contracts";
 import { cn } from "@/shared/lib/cn";
 import { typographicCover } from "@/shared/lib/cover";
 
+const CANERY_MEDIA_PREFIX = "https://minio.canery.in/media/";
+
 /**
  * The image on a card or at the top of an article.
  *
@@ -38,6 +40,13 @@ export function BlogCover({
           fill
           sizes={sizes}
           priority={priority}
+          // The public media origin is already content-addressed and cached by
+          // nginx/Cloudflare. Inside Docker that hostname deliberately resolves
+          // to nginx's private bridge address to avoid NAT hairpinning, which
+          // Next's optimiser correctly rejects as an SSRF target. Let the
+          // browser fetch these public assets directly; other remote covers
+          // continue through the optimiser.
+          unoptimized={blog.cover_image_url.startsWith(CANERY_MEDIA_PREFIX)}
           className="object-cover"
         />
       </div>

@@ -80,6 +80,25 @@ describe("Article", () => {
     expect(container.querySelectorAll("th")).toHaveLength(2);
   });
 
+  it("renders inline and display LaTeX with KaTeX", () => {
+    const { container } = render(
+      <Article
+        markdown={
+          "The children of node $i$ are $2i$ and $2i+1$.\n\n$$\n\\sum_{k=1}^{n} k\n$$"
+        }
+        sections={[]}
+      />,
+    );
+
+    const displayExpression = container.querySelector(".katex-display");
+
+    expect(container.querySelectorAll(".katex")).toHaveLength(4);
+    expect(displayExpression).not.toBeNull();
+    expect(container.querySelector('annotation[encoding="application/x-tex"]')?.textContent).toBe(
+      "i",
+    );
+  });
+
   it("opens external links safely and keeps internal ones in-app", () => {
     const { container } = render(
       <Article

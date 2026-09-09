@@ -9,6 +9,7 @@ import { readServerConfig } from "@/shared/config";
 import { AppProviders } from "./providers/AppProviders";
 import { themeScript } from "./providers/theme-script";
 
+import "katex/dist/katex.min.css";
 import "./globals.css";
 
 /**

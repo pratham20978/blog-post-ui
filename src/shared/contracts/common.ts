@@ -90,6 +90,7 @@ export type ErrorCategory =
   | "SECTION_ANCHOR_UNKNOWN"
   | "SECTION_REFERENCED_BY_PIN"
   | "CATEGORY_UNKNOWN"
+  | "CATEGORY_IN_USE"
   | "SERIES_UNKNOWN"
   // Interaction
   | "COMMENT_NOT_FOUND"

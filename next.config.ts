@@ -28,7 +28,13 @@ const nextConfig: NextConfig = {
     // knowable ahead of time. Remote images are optimised
     // over https only and never inlined as SVG (an SVG from an arbitrary host
     // is a script execution primitive).
-    remotePatterns: [{ protocol: "https", hostname: "**" }],
+    remotePatterns: [{ 
+      protocol: "https", 
+      hostname: "minio.canery.in",
+      port: "",
+      pathname: "/media/**"
+    }],
+    dangerouslyAllowLocalIP: true,
     dangerouslyAllowSVG: false,
   },
 
