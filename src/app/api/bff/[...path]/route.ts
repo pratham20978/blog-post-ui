@@ -25,9 +25,12 @@ import type { APIResponse } from "@/shared/contracts";
  *    this every request is a new actor, reading history never accumulates, and
  *    the merge-on-sign-in that backfills it has nothing to merge. Nothing
  *    breaks visibly; the feature just never works.
- * 3. **Refresh and replay** on an expired access token, exactly once, with
- *    concurrent callers sharing one refresh — see `refresh.ts` for why that
- *    matters more than it looks.
+ * 3. **Refresh** — before the request when the access cookie is already gone
+ *    and only the refresh cookie remains (the common case, since both expire
+ *    together), or after it, with a replay, when an expired access token was
+ *    actually sent. Exactly once per request either way, with concurrent
+ *    callers sharing one refresh — see `refresh.ts` for why that matters more
+ *    than it looks.
  *
  * It also removes CORS from the picture. The backend only enables CORS when
  * `BLOGS_DEBUG=true` (`src/blogs/main.py`), so a browser talking to FastAPI
@@ -99,9 +102,33 @@ async function handler(
       : await request.arrayBuffer();
 
   const jar = request.cookies;
-  const access = jar.get(COOKIE.access)?.value;
+  let access = jar.get(COOKIE.access)?.value;
   const refresh = jar.get(COOKIE.refresh)?.value;
-  const actor = jar.get(COOKIE.actor)?.value;
+  let actor = jar.get(COOKIE.actor)?.value;
+
+  let refreshResult: Awaited<ReturnType<typeof refreshTokens>> | null = null;
+
+  // The access cookie's Max-Age equals the JWT's own TTL, so the browser
+  // deletes it at the same moment the token expires — which means the
+  // AUTH_TOKEN_EXPIRED 401 that the replay below is built around almost never
+  // arrives. What arrives instead is a refresh cookie with no access cookie.
+  // Forwarded bare, the backend answers a perfectly valid 200 "anonymous" for
+  // it, the client believes that, and a reader with thirty days of session
+  // left sees "Sign in". So that shape is treated as what it is: a session to
+  // restore before the request goes out, not a visitor to pass through.
+  if (!access && refresh) {
+    refreshResult = await refreshTokens(refresh);
+
+    if (refreshResult.status === "rotated") {
+      access = refreshResult.pair.access_token;
+      actor = refreshResult.pair.actor_token;
+    } else if (refreshResult.status === "unavailable") {
+      return fail(503, "INTERNAL_ERROR", "Session restoration is temporarily unavailable.", {
+        stage: "ACCESS",
+      });
+    }
+    // Rejected: forward anonymously, and the cookie pair is cleared below.
+  }
 
   let attempt: Forwarded;
   try {
@@ -110,11 +137,12 @@ async function handler(
     return fail(502, "INTERNAL_ERROR", "Could not reach the API.", { stage: "ACCESS" });
   }
 
-  // Evaluated once, against the *first* attempt. Re-testing after the replay
-  // would ask a different question: the replay's own 401 means the new token
-  // was rejected too, and refreshing again from there is a loop.
-  const expired = refresh !== undefined && (await isExpiredAccessToken(attempt));
-  let refreshResult: Awaited<ReturnType<typeof refreshTokens>> | null = null;
+  // Evaluated once, against the *first* attempt, and only when this request
+  // has not already refreshed. Re-testing after the replay would ask a
+  // different question: the replay's own 401 means the new token was rejected
+  // too, and refreshing again from there is a loop.
+  const expired =
+    refreshResult === null && refresh !== undefined && (await isExpiredAccessToken(attempt));
 
   if (expired) {
     refreshResult = await refreshTokens(refresh);
