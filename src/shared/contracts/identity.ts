@@ -76,8 +76,8 @@ export interface TokenPair {
   readonly token_type: "Bearer";
   /** Seconds until `access_token` expires. */
   readonly expires_in: number;
-  /** 365 days. Must be echoed on every request or the visitor's history is
-   *  orphaned. */
+  /** 365 days. Must be echoed on identity-dependent requests or the visitor's
+   *  history is orphaned. */
   readonly actor_token: string;
 }
 

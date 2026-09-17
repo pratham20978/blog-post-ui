@@ -29,6 +29,7 @@ function blog(overrides: Partial<BlogSummary> & Pick<BlogSummary, "id" | "slug">
     content_updated_on: null,
     word_count: 500,
     reading_minutes: 3,
+    unique_reader_count: 0,
     member_view_count: 0,
     like_count: 0,
     published_at: "2026-01-01T00:00:00Z",

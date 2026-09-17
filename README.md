@@ -87,9 +87,10 @@ enable OTP logging; real Resend delivery requires that logging to remain off.
 ### Things about this API worth knowing before you touch it
 
 1. **Two tokens, both headers.** `Authorization: Bearer` (15 min) and
-   `X-Actor-Token` (365 days). The actor token must be echoed on every request
-   and re-read from every response — drop it and each request mints a new
-   anonymous actor, orphaning the visitor's pre-signup history.
+   `X-Actor-Token` (365 days). The actor token must be echoed on every
+   identity-dependent request and re-read from every response. Public cached
+   reads stay stateless; dropping the token from engagement requests forks the
+   visitor's pre-signup history.
 2. **Refresh is single-use and rotating.** Replaying a spent refresh token
    revokes the entire token family, so refresh must be single-flight.
 3. **`extra="forbid"` on every contract.** An unknown key in a request body is

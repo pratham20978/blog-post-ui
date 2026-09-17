@@ -455,6 +455,7 @@ const EMPTY_METADATA = {
   canonical_url: null,
   published_on: null,
   content_updated_on: null,
+  unique_reader_count: 0,
   member_view_count: 0,
   like_count: 0,
 } as const;

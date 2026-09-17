@@ -55,6 +55,7 @@ export interface EngagementAccepted {
 
 export interface BlogEngagementSummary {
   readonly blog_id: BlogId;
+  readonly unique_reader_count: number;
   readonly member_view_count: number;
   readonly like_count: number;
   readonly liked_by_me: boolean | null;

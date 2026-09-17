@@ -69,7 +69,7 @@ export function BlogCard({
       </time>
     ) : null,
     formatReadingTime(blog.reading_minutes),
-    `${formatCount(blog.member_view_count)} views`,
+    `${formatCount(blog.unique_reader_count)} readers`,
     `${formatCount(blog.like_count)} likes`,
     seriesTitle && blog.series_position
       ? `${seriesTitle} · ${blog.series_position}`

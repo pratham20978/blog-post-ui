@@ -14,11 +14,11 @@ const QUALIFIED_SCROLL_RATIO = 0.25;
 
 export function ArticleEngagement({
   blogId,
-  initialMemberViews,
+  initialUniqueReaders,
   initialLikes,
 }: {
   blogId: BlogId;
-  initialMemberViews: number;
+  initialUniqueReaders: number;
   initialLikes: number;
 }) {
   const { session } = useAuth();
@@ -26,7 +26,8 @@ export function ArticleEngagement({
   const { record, flush } = useBeacon();
   const [summary, setSummary] = useState<BlogEngagementSummary>({
     blog_id: blogId,
-    member_view_count: initialMemberViews,
+    unique_reader_count: initialUniqueReaders,
+    member_view_count: 0,
     like_count: initialLikes,
     liked_by_me: null,
   });
@@ -134,7 +135,7 @@ export function ArticleEngagement({
 
   return (
     <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-meta text-muted">
-      <span>{formatCount(summary.member_view_count)} views</span>
+      <span>{formatCount(summary.unique_reader_count)} readers</span>
       <button
         type="button"
         aria-pressed={summary.liked_by_me === true}

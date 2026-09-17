@@ -140,7 +140,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
           />
           <ArticleEngagement
             blogId={blog.id}
-            initialMemberViews={blog.member_view_count}
+            initialUniqueReaders={blog.unique_reader_count}
             initialLikes={blog.like_count}
           />
           <ReadingMarker blogId={blog.id} />

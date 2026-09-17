@@ -34,6 +34,12 @@ export async function getServerSession(): Promise<Session> {
   // probe through it instead of rendering a false signed-out state.
   if (hasRefresh && !hasAccess) return { status: "loading" };
 
+  // Anonymous state is already known without a backend call. A Server
+  // Component cannot persist a replacement for a missing, expired or invalid
+  // actor token, so resolving it here can only create an orphan row. The first
+  // identity-dependent BFF request validates or establishes the actor cookie.
+  if (!hasAccess) return { status: "anonymous", actorId: null };
+
   const me = await serverFetchOptional<MeResponse>(routes.me());
 
   if (!me) {

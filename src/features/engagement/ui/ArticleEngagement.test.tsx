@@ -39,6 +39,7 @@ function response(liked: boolean | null = null, likes = 3): Response {
       error: null,
       data: {
         blog_id: blogId,
+        unique_reader_count: 12,
         member_view_count: 12,
         like_count: likes,
         liked_by_me: liked,
@@ -68,7 +69,7 @@ describe("ArticleEngagement", () => {
 
   it("counts after ten visible seconds and only once", async () => {
     const view = render(
-      <ArticleEngagement blogId={blogId} initialMemberViews={11} initialLikes={3} />,
+      <ArticleEngagement blogId={blogId} initialUniqueReaders={11} initialLikes={3} />,
     );
     await act(async () => vi.advanceTimersByTime(9_999));
     expect(mocks.record).not.toHaveBeenCalled();
@@ -81,7 +82,7 @@ describe("ArticleEngagement", () => {
     expect(mocks.flush).toHaveBeenCalledTimes(1);
 
     view.rerender(
-      <ArticleEngagement blogId={blogId} initialMemberViews={11} initialLikes={3} />,
+      <ArticleEngagement blogId={blogId} initialUniqueReaders={11} initialLikes={3} />,
     );
     await act(async () => vi.advanceTimersByTime(20_000));
     expect(mocks.record).toHaveBeenCalledTimes(1);
@@ -92,7 +93,7 @@ describe("ArticleEngagement", () => {
       configurable: true,
       value: "hidden",
     });
-    render(<ArticleEngagement blogId={blogId} initialMemberViews={0} initialLikes={0} />);
+    render(<ArticleEngagement blogId={blogId} initialUniqueReaders={0} initialLikes={0} />);
     await act(async () => vi.advanceTimersByTime(20_000));
     expect(mocks.record).not.toHaveBeenCalled();
 
@@ -107,13 +108,13 @@ describe("ArticleEngagement", () => {
 
   it("qualifies at 25 percent only after reader movement", async () => {
     mocks.reading = { activeAnchor: "part-one", progressRatio: 0.3, hasReaderMoved: true };
-    render(<ArticleEngagement blogId={blogId} initialMemberViews={0} initialLikes={0} />);
+    render(<ArticleEngagement blogId={blogId} initialUniqueReaders={0} initialLikes={0} />);
     await act(async () => Promise.resolve());
     expect(mocks.record).toHaveBeenCalledTimes(1);
   });
 
   it("prompts an anonymous reader instead of calling the like API", async () => {
-    render(<ArticleEngagement blogId={blogId} initialMemberViews={12} initialLikes={3} />);
+    render(<ArticleEngagement blogId={blogId} initialUniqueReaders={12} initialLikes={3} />);
     await act(async () => Promise.resolve());
     expect(screen.getByRole("link", { name: "Sign in to like" })).not.toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Like/ }));
@@ -138,7 +139,7 @@ describe("ArticleEngagement", () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(response(false, 3))
       .mockResolvedValueOnce(response(true, 4));
-    render(<ArticleEngagement blogId={blogId} initialMemberViews={12} initialLikes={3} />);
+    render(<ArticleEngagement blogId={blogId} initialUniqueReaders={12} initialLikes={3} />);
     await act(async () => Promise.resolve());
     fireEvent.click(screen.getByRole("button", { name: /Like/ }));
 
@@ -171,7 +172,7 @@ describe("ArticleEngagement", () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(response(false, 3))
       .mockRejectedValueOnce(new Error("offline"));
-    render(<ArticleEngagement blogId={blogId} initialMemberViews={12} initialLikes={3} />);
+    render(<ArticleEngagement blogId={blogId} initialUniqueReaders={12} initialLikes={3} />);
     await act(async () => Promise.resolve());
     fireEvent.click(screen.getByRole("button", { name: /Like/ }));
 
