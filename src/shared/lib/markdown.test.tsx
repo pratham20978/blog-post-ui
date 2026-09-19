@@ -23,6 +23,18 @@ describe("Article", () => {
     expect(container.querySelector("h2")?.id).toBe("visible");
   });
 
+  it("suppresses a legacy body H1 because the page shell owns the title", () => {
+    const { container } = render(
+      <Article
+        markdown={"# Duplicate title\n\n## Visible section\n\nBody."}
+        sections={[section("duplicate-title", 0, 1), section("visible-section", 1)]}
+      />,
+    );
+
+    expect(container.querySelector("h1")).toBeNull();
+    expect(container.querySelector("h2")?.id).toBe("visible-section");
+  });
+
   it("gives headings the backend anchor verbatim, with no sanitiser prefix", () => {
     // The regression this exists for: with the plugins in the other order,
     // rehype-sanitize rewrites ids to `user-content-<anchor>` as a

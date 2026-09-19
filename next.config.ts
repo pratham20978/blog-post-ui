@@ -10,8 +10,7 @@ import type { NextConfig } from "next";
  * browser's request verbatim — with no tokens, since the browser cannot read
  * them — so the proxy has to be real code, not a rewrite rule.
  *
- * The `/:slug/blog` redirect honours the URL shape the platform was specified
- * with while keeping `/blogs/[slug]` canonical.
+ * Legacy article shapes redirect to `/blogs/[slug]`, the one canonical route.
  */
 const nextConfig: NextConfig = {
   // Emits .next/standalone — the traced server plus only the node_modules it
@@ -40,6 +39,11 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     return [
+      {
+        source: "/p/:slug",
+        destination: "/blogs/:slug",
+        permanent: true,
+      },
       {
         source: "/:slug/blog",
         destination: "/blogs/:slug",

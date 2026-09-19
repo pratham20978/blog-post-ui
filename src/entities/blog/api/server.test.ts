@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/shared/config", () => ({ dataSource: () => "api" }));
 vi.mock("@/shared/api/server", () => mocks);
 
-import { fetchFeed } from "./server";
+import { fetchAllPublishedBlogs, fetchFeed } from "./server";
 
 describe("fetchFeed", () => {
   beforeEach(() => {
@@ -28,5 +28,16 @@ describe("fetchFeed", () => {
         ([path]) => String(path).endsWith("/content"),
       ),
     ).toBe(false);
+  });
+
+  it("follows every cursor for a complete sitemap inventory", async () => {
+    mocks.serverFetch
+      .mockResolvedValueOnce({ items: [{ id: "one" }], next_cursor: "next", has_more: true })
+      .mockResolvedValueOnce({ items: [{ id: "two" }], next_cursor: null, has_more: false });
+
+    const result = await fetchAllPublishedBlogs();
+
+    expect(result.map((item) => item.id)).toEqual(["one", "two"]);
+    expect(mocks.serverFetch.mock.calls[1]?.[1]?.query?.cursor).toBe("next");
   });
 });

@@ -11,10 +11,19 @@ import { BlogCard } from "@/entities/blog/ui/BlogCard";
 import { readServerConfig } from "@/shared/config";
 import { ChipLink, Container, Eyebrow, Rule, SectionHeading } from "@/shared/ui/primitives";
 
-export const metadata: Metadata = {
-  title: "Articles",
-  description: "Essays and series on building software.",
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}): Promise<Metadata> {
+  const { category } = await searchParams;
+  return {
+    title: "Articles",
+    description: "Essays and series on building software.",
+    alternates: { canonical: "/blogs" },
+    ...(category && { robots: { index: false, follow: true } }),
+  };
+}
 
 export default async function BlogsPage({
   searchParams,

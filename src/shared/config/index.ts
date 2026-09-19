@@ -66,8 +66,8 @@ export function readServerConfig(): AppConfig {
   const adapter = process.env.NEXT_PUBLIC_SEARCH_ADAPTER;
 
   return {
-    siteName: process.env.NEXT_PUBLIC_SITE_NAME ?? "Canerly",
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+    siteName: process.env.NEXT_PUBLIC_SITE_NAME ?? "Canery",
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://canery.in",
     searchAdapter: adapter === "http" || adapter === "mock" ? adapter : "none",
     dataSource: dataSource(),
     // Filled from the backend capability endpoint by the root layout.

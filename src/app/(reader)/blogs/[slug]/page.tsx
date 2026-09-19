@@ -14,8 +14,11 @@ import { BlogCover } from "@/entities/blog/ui/BlogCover";
 import { ReadingPositionProvider } from "@/features/marker/model/ReadingPositionProvider";
 import { ReadingMarker } from "@/features/marker/ui/ReadingMarker";
 import { ArticleEngagement } from "@/features/engagement/ui/ArticleEngagement";
+import { readServerConfig } from "@/shared/config";
 import { formatDate, formatReadingTime, toDateAttribute } from "@/shared/lib/date";
+import { JsonLd } from "@/shared/lib/JsonLd";
 import { Article } from "@/shared/lib/markdown";
+import { articleCanonical, blogPostingJsonLd } from "@/shared/lib/seo";
 import { Container, Eyebrow, MetaRow, Rule } from "@/shared/ui/primitives";
 import { TableOfContents } from "@/widgets/ArticleShell/TableOfContents";
 
@@ -26,6 +29,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const blog = await fetchBlog(slug);
 
   if (!blog) return { title: "Not found" };
+  const config = readServerConfig();
+  const canonical = articleCanonical(blog, config.siteUrl);
   const published = blog.published_on ?? blog.published_at;
   const updated = blog.content_updated_on ?? blog.updated_at;
 
@@ -38,6 +43,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       description: blog.summary ?? undefined,
       publishedTime: published ?? undefined,
       modifiedTime: updated,
+      url: canonical,
       images:
         blog.cover_image_url && blog.cover_image_alt
           ? [{ url: blog.cover_image_url, alt: blog.cover_image_alt }]
@@ -53,7 +59,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
           : undefined,
     },
     keywords: [...blog.tag_keys],
-    alternates: { canonical: blog.canonical_url ?? `/blogs/${blog.slug}` },
+    alternates: { canonical },
   };
 }
 
@@ -76,6 +82,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
   ]);
 
   const categoryLabels = new Map(categories.map((entry) => [entry.key, entry.label]));
+  const config = readServerConfig();
   const currentSeries = series.find((entry) => entry.id === blog.series_id) ?? null;
   const editorialPublished = blog.published_on ?? blog.published_at;
 
@@ -95,6 +102,13 @@ export default async function ArticlePage({ params }: { params: Params }) {
 
   return (
     <article>
+      <JsonLd
+        id="article-structured-data"
+        data={blogPostingJsonLd(blog, {
+          siteName: config.siteName,
+          siteUrl: config.siteUrl,
+        })}
+      />
       <ReadingPositionProvider sections={blog.sections}>
       {/* Hero. Only shown when the article has typed cover metadata — a
           generated cover at full bleed above the title would be a large grey

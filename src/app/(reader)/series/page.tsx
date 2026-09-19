@@ -8,6 +8,7 @@ import { Container, Eyebrow } from "@/shared/ui/primitives";
 export const metadata: Metadata = {
   title: "Series",
   description: "Multi-part reading paths.",
+  alternates: { canonical: "/series" },
 };
 
 export default async function SeriesIndexPage() {

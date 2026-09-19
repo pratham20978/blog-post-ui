@@ -94,12 +94,8 @@ function articleBody(markdown: string): string {
  * heading clear of the sticky header.
  */
 const components = {
-  h1: (props: ComponentPropsWithoutRef<"h1">) => (
-    <h1
-      {...props}
-      className="mt-14 font-sans text-title font-semibold leading-title tracking-title scroll-mt-24"
-    />
-  ),
+  // The route shell renders the only page H1. Ignore legacy Markdown titles.
+  h1: () => null,
   h2: (props: ComponentPropsWithoutRef<"h2">) => (
     <h2
       {...props}

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { getServerSession } from "@/features/auth/server/session";
 import { getOAuthProviders } from "@/features/auth/server/providers";
 import { readServerConfig } from "@/shared/config";
+import { JsonLd } from "@/shared/lib/JsonLd";
 
 import { AppProviders } from "./providers/AppProviders";
 import { themeScript } from "./providers/theme-script";
@@ -85,6 +86,28 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
+        <JsonLd
+          id="site-structured-data"
+          data={{
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "Organization",
+                "@id": `${config.siteUrl}#organization`,
+                name: config.siteName,
+                url: config.siteUrl,
+              },
+              {
+                "@type": "WebSite",
+                "@id": `${config.siteUrl}#website`,
+                name: config.siteName,
+                url: config.siteUrl,
+                publisher: { "@id": `${config.siteUrl}#organization` },
+                inLanguage: "en",
+              },
+            ],
+          }}
+        />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-fg focus:px-4 focus:py-2 focus:text-bg"

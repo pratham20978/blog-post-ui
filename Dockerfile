@@ -25,8 +25,8 @@ COPY . .
 # NEXT_PUBLIC_ values are inlined into the browser bundle at build time, so they
 # are build arguments rather than runtime environment: a container started with
 # a different NEXT_PUBLIC_SITE_URL would still serve the one baked in here.
-ARG NEXT_PUBLIC_SITE_URL=http://localhost:3000
-ARG NEXT_PUBLIC_SITE_NAME=Canerly
+ARG NEXT_PUBLIC_SITE_URL=https://canery.in
+ARG NEXT_PUBLIC_SITE_NAME=Canery
 ARG NEXT_PUBLIC_SEARCH_ADAPTER=none
 
 # `next build` runs every route once to decide what can be prerendered, so a
