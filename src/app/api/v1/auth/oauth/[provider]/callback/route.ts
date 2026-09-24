@@ -79,7 +79,7 @@ function redirectTo(
   path: string,
   query?: Record<string, string>,
 ): NextResponse {
-  const url = new URL(path, request.nextUrl.origin);
+  const url = new URL(path, process.env.NEXT_PUBLIC_SITE_URL ?? request.nextUrl.origin);
   for (const [key, value] of Object.entries(query ?? {})) {
     url.searchParams.set(key, value);
   }
