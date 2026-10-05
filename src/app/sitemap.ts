@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { connection } from "next/server";
 
 import {
   fetchAllPublishedBlogs,
@@ -7,9 +8,12 @@ import {
 import { readServerConfig } from "@/shared/config";
 import { absoluteUrl } from "@/shared/lib/seo";
 
-export const revalidate = 300;
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Request time only. Prerendered, it was built from the Dockerfile's fixture
+  // data and served those fake URLs after every deploy until it revalidated.
+  // The fetches keep their own data-cache lifetimes, so the API is not hit
+  // on every request.
+  await connection();
   const { siteUrl } = readServerConfig();
   const base: MetadataRoute.Sitemap = [
     { url: absoluteUrl(siteUrl, "/blogs"), changeFrequency: "daily", priority: 1 },

@@ -40,6 +40,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     description: blog.summary ?? undefined,
     openGraph: {
       type: "article",
+      // Repeated from the root layout: a page's openGraph replaces it, not merges.
+      siteName: config.siteName,
       title: blog.title,
       description: blog.summary ?? undefined,
       publishedTime: published ?? undefined,

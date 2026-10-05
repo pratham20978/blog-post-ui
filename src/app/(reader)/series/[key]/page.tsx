@@ -22,7 +22,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
   return {
     title: series.title,
-    description: series.description ?? undefined,
+    // `||`, not `??`: a series saved without a description has an empty string.
+    description:
+      series.description || `Articles in the ${series.title} series, written to be read in order.`,
     alternates: { canonical: `/series/${series.key}` },
   };
 }

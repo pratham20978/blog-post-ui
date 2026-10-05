@@ -69,6 +69,10 @@ export default async function BlogsPage({
 
   return (
     <Container width="wide" className="pb-20 pt-10 sm:pt-14">
+      {/* The page's heading for search engines and screen readers; the design
+          leads with the featured article instead. */}
+      <h1 className="sr-only">Articles</h1>
+
       {/* Filters. Links rather than buttons, so a filtered feed is shareable
           and survives a reload. */}
       <nav aria-label="Filter by category" className="flex flex-wrap gap-2">
