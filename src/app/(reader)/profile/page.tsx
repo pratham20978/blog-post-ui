@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { fetchFeedSafe } from "@/entities/blog/api/server";
 import { getServerSession } from "@/features/auth/server/session";
@@ -15,14 +14,19 @@ import type {
   Marker,
   RecentView,
 } from "@/shared/contracts";
-import { formatDate, formatRelative } from "@/shared/lib/date";
+import { formatDate } from "@/shared/lib/date";
 import { ButtonLink } from "@/shared/ui/Button";
 import { Container, Eyebrow, Rule, SectionHeading } from "@/shared/ui/primitives";
+import { ReadingListButton } from "@/widgets/ReadingList/ReadingListButton";
+import { ReadingRow, type ReadingListEntry } from "@/widgets/ReadingList/ReadingRow";
 
 export const metadata: Metadata = {
   title: "Profile",
   robots: { index: false, follow: false },
 };
+
+/** Rows each list shows before "View all" takes over. */
+const PREVIEW_COUNT = 5;
 
 export default async function ProfilePage() {
   const session = await getServerSession();
@@ -87,9 +91,24 @@ export default async function ProfilePage() {
   // A marker whose article we cannot name is dropped rather than rendered as a
   // bare UUID. It means the article fell outside the fetched window or was
   // archived — either way there is nothing useful to show.
-  const resolvedMarkers = markers
+  const inProgress: readonly ReadingListEntry[] = markers
     .map((marker) => ({ marker, blog: blogsById.get(marker.blog_id) }))
-    .filter((entry): entry is { marker: Marker; blog: BlogSummary } => Boolean(entry.blog));
+    .filter((entry): entry is { marker: Marker; blog: BlogSummary } => Boolean(entry.blog))
+    .map(({ marker, blog }) => ({
+      id: blog.id,
+      title: blog.title,
+      href: markerHref(blog, marker),
+      at: marker.updated_at,
+      progress: marker.progress_ratio,
+    }));
+
+  const recentlyRead: readonly ReadingListEntry[] = recent.map((view) => ({
+    id: view.blog_id,
+    title: view.title,
+    href: `/blogs/${view.slug}`,
+    at: view.last_viewed_at,
+    progress: null,
+  }));
 
   return (
     <Container className="pb-20 pt-10 sm:pt-14">
@@ -121,50 +140,13 @@ export default async function ProfilePage() {
 
       <Rule className="mt-12" />
 
-      <section aria-labelledby="continue" className="mt-12">
-        <SectionHeading id="continue">Continue reading</SectionHeading>
-        {resolvedMarkers.length === 0 ? (
-          <EmptyState>
-            Nothing in progress. Your place is saved automatically as you read.
-          </EmptyState>
-        ) : (
-          <ul className="flex flex-col">
-            {resolvedMarkers.map(({ marker, blog }) => (
-              <li key={marker.blog_id} className="border-b border-rule last:border-b-0">
-                <Link
-                  href={markerHref(blog, marker)}
-                  className="group block py-4"
-                >
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-[0.9375rem] text-fg transition-colors group-hover:text-muted">
-                      {blog.title}
-                    </span>
-                    <span className="shrink-0 text-meta text-muted">
-                      {formatRelative(marker.updated_at)}
-                    </span>
-                  </div>
-
-                  {marker.progress_ratio !== null && (
-                    <div
-                      className="mt-3 h-px w-full bg-rule"
-                      role="progressbar"
-                      aria-valuenow={Math.round(marker.progress_ratio * 100)}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-label={`Reading progress for ${blog.title}`}
-                    >
-                      <div
-                        className="h-px bg-fg"
-                        style={{ width: `${marker.progress_ratio * 100}%` }}
-                      />
-                    </div>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <ReadingListSection
+        id="continue"
+        title="Continue reading"
+        entries={inProgress}
+        searchLabel="Search articles in progress"
+        emptyMessage="Nothing in progress. Your place is saved automatically as you read."
+      />
 
       <Rule className="mt-12" />
 
@@ -191,30 +173,13 @@ export default async function ProfilePage() {
 
       <Rule className="mt-12" />
 
-      <section aria-labelledby="recent" className="mt-12">
-        <SectionHeading id="recent">Recently read</SectionHeading>
-        {recent.length === 0 ? (
-          <EmptyState>Nothing yet.</EmptyState>
-        ) : (
-          <ul className="flex flex-col">
-            {recent.map((view) => (
-              <li key={view.blog_id} className="border-b border-rule last:border-b-0">
-                <Link
-                  href={`/blogs/${view.slug}`}
-                  className="group flex items-baseline justify-between gap-4 py-4"
-                >
-                  <span className="text-[0.9375rem] text-fg transition-colors group-hover:text-muted">
-                    {view.title}
-                  </span>
-                  <span className="shrink-0 text-meta text-muted">
-                    {formatRelative(view.last_viewed_at)}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <ReadingListSection
+        id="recent"
+        title="Recently read"
+        entries={recentlyRead}
+        searchLabel="Search your reading history"
+        emptyMessage="Nothing yet."
+      />
 
       <Rule className="mt-12" />
 
@@ -232,6 +197,51 @@ export default async function ProfilePage() {
         <SignOutButtons />
       </section>
     </Container>
+  );
+}
+
+/**
+ * A reading list, previewed: the first few rows render here on the server, and
+ * "View all" opens the whole list — searchable — once there is more to see.
+ */
+function ReadingListSection({
+  id,
+  title,
+  entries,
+  searchLabel,
+  emptyMessage,
+}: {
+  id: string;
+  title: string;
+  entries: readonly ReadingListEntry[];
+  searchLabel: string;
+  emptyMessage: string;
+}) {
+  return (
+    <section aria-labelledby={id} className="mt-12">
+      <SectionHeading
+        id={id}
+        action={
+          entries.length > PREVIEW_COUNT ? (
+            <ReadingListButton title={title} entries={entries} searchLabel={searchLabel} />
+          ) : undefined
+        }
+      >
+        {title}
+      </SectionHeading>
+
+      {entries.length === 0 ? (
+        <EmptyState>{emptyMessage}</EmptyState>
+      ) : (
+        <ul className="flex flex-col">
+          {entries.slice(0, PREVIEW_COUNT).map((entry) => (
+            <li key={entry.id} className="border-b border-rule last:border-b-0">
+              <ReadingRow entry={entry} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

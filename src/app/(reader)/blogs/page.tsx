@@ -8,8 +8,13 @@ import {
 } from "@/entities/blog/api/server";
 import { deriveFeedSections } from "@/entities/blog/model/selectors";
 import { BlogCard } from "@/entities/blog/ui/BlogCard";
+import { BrowseArticlesButton } from "@/features/search/ui/BrowseArticlesButton";
 import { readServerConfig } from "@/shared/config";
 import { ChipLink, Container, Eyebrow, Rule, SectionHeading } from "@/shared/ui/primitives";
+
+/** Cards the feed shows before the archive dialog takes over — enough to see
+ *  what is new without the page running to the length of the archive. */
+const LATEST_COUNT = 6;
 
 export async function generateMetadata({
   searchParams,
@@ -187,11 +192,11 @@ export default async function BlogsPage({
       <Rule className="mt-16" />
       <section aria-labelledby="all-articles" className="mt-12">
         <SectionHeading id="all-articles">
-          {category ? `${categoryLabels.get(category) ?? category}` : "All articles"}
+          {category ? `${categoryLabels.get(category) ?? category}` : "Latest articles"}
         </SectionHeading>
 
         <ul className="flex flex-col gap-12">
-          {sections.all.map((blog, index) => (
+          {sections.all.slice(0, LATEST_COUNT).map((blog, index) => (
             <li key={blog.id}>
               <BlogCard
                 blog={blog}
@@ -203,6 +208,12 @@ export default async function BlogsPage({
             </li>
           ))}
         </ul>
+
+        {(sections.all.length > LATEST_COUNT || feed.has_more) && (
+          <div className="mt-12 flex justify-center">
+            <BrowseArticlesButton category={category} categories={categories} series={series} />
+          </div>
+        )}
       </section>
 
       {config.dataSource === "fixtures" && (

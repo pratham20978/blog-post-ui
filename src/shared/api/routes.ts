@@ -76,4 +76,8 @@ export const localRoutes = {
   /** What to read after an article. Also read directly by the article page,
    *  which is server-rendered and does not need the hop. */
   nextBlog: (slug: string) => `/api/blogs/${encodeURIComponent(slug)}/next`,
+  /** Every published article, optionally in one category — the index the
+   *  "browse all" dialog lists and searches. */
+  blogIndex: (category?: string) =>
+    category ? `/api/blogs?category=${encodeURIComponent(category)}` : "/api/blogs",
 } as const;

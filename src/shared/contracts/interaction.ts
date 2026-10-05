@@ -22,6 +22,9 @@ export interface Comment {
   readonly id: CommentId;
   readonly blog_id: BlogId;
   readonly user_id: UserId;
+  /** The commenter's display name from their sign-in provider. Null for an
+   *  account that never supplied one — email-code sign-ups. Never an email. */
+  readonly author_name: string | null;
   readonly parent_comment_id: CommentId | null;
   /** 0 = root, 1 = reply. */
   readonly depth: number;

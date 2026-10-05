@@ -11,6 +11,7 @@ import {
 } from "@/entities/blog/api/server";
 import { nextBlog } from "@/entities/blog/model/selectors";
 import { BlogCover } from "@/entities/blog/ui/BlogCover";
+import { CommentsSection } from "@/features/comments/ui/CommentsSection";
 import { ReadingPositionProvider } from "@/features/marker/model/ReadingPositionProvider";
 import { ReadingMarker } from "@/features/marker/ui/ReadingMarker";
 import { ArticleEngagement } from "@/features/engagement/ui/ArticleEngagement";
@@ -184,7 +185,13 @@ export default async function ArticlePage({ params }: { params: Params }) {
           </div>
 
           <div className="hidden xl:block">
-            <TableOfContents sections={blog.sections} className="sticky top-24" />
+            {/* Capped to the viewport under the sticky header (6rem down,
+                2rem clear at the bottom), so a long outline scrolls inside
+                itself instead of running off the screen. */}
+            <TableOfContents
+              sections={blog.sections}
+              className="sticky top-24 max-h-[calc(100dvh-8rem)]"
+            />
           </div>
         </div>
 
@@ -219,6 +226,8 @@ export default async function ArticlePage({ params }: { params: Params }) {
             </Link>
           </nav>
         )}
+
+        <CommentsSection blogId={blog.id} authorId={blog.author_id} />
       </Container>
       </ReadingPositionProvider>
     </article>

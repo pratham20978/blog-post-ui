@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { fetchCategories, fetchFeedSafe, fetchSeries } from "@/entities/blog/api/server";
+import { rankSeries } from "@/entities/blog/model/selectors";
 import { getServerSession } from "@/features/auth/server/session";
 import { readServerConfig } from "@/shared/config";
 import { SiteFooter } from "@/widgets/SiteFooter/SiteFooter";
@@ -39,10 +40,12 @@ export default async function ReaderLayout({ children }: { children: ReactNode }
         {children}
       </main>
 
+      {/* Trending first: the footer has room for a handful, so which
+          handful matters once there are more series than fit. */}
       <SiteFooter
         siteName={config.siteName}
         categories={categories}
-        series={series}
+        series={rankSeries(feed.items, series)}
         signedIn={session.status === "authenticated"}
       />
     </div>

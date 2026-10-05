@@ -34,7 +34,9 @@ const button = cva(
         danger: "bg-danger text-white hover:opacity-90",
       },
       size: {
-        sm: "h-9 min-h-9 px-3 text-meta",
+        // Not `text-meta`: tailwind-merge reads unknown `text-*` names as
+        // colours, so it would drop the variant's text colour.
+        sm: "h-9 min-h-9 px-3 text-[0.8125rem]",
         md: "h-11 px-5 text-[0.9375rem]",
         lg: "h-12 px-7 text-base",
       },

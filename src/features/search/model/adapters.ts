@@ -26,6 +26,17 @@ function tokenise(query: string): readonly string[] {
 }
 
 /**
+ * Whether every word of `query` appears in `text` — the rule the scored search
+ * below applies, for lists small enough to filter on a single field. A query
+ * with no searchable words matches everything, so a box holding one stray
+ * letter filters nothing out.
+ */
+export function matchesAllTokens(text: string, query: string): boolean {
+  const haystack = normalise(text);
+  return tokenise(query).every((token) => haystack.includes(token));
+}
+
+/**
  * Client-side search over the already-fetched feed.
  *
  * Honest about what it is: substring matching across title, summary, category

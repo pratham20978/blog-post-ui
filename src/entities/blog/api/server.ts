@@ -51,14 +51,19 @@ export async function fetchFeed(params: BlogListParams = {}): Promise<Page<BlogS
   });
 }
 
-/** Follow the API's keyset cursor to exhaustion for complete sitemaps. */
-export async function fetchAllPublishedBlogs(): Promise<readonly BlogSummary[]> {
+/**
+ * Follow the API's keyset cursor to exhaustion — for complete sitemaps, and
+ * for the archive index the "browse all" dialog searches.
+ */
+export async function fetchAllPublishedBlogs(
+  params: Pick<BlogListParams, "category"> = {},
+): Promise<readonly BlogSummary[]> {
   const items: BlogSummary[] = [];
   const seenCursors = new Set<string>();
   let cursor: string | undefined;
 
   for (;;) {
-    const page = await fetchFeed({ limit: 100, ...(cursor && { cursor }) });
+    const page = await fetchFeed({ ...params, limit: 100, ...(cursor && { cursor }) });
     items.push(...page.items);
 
     if (!page.has_more) return items;

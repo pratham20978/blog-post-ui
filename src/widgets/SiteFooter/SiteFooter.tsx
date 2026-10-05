@@ -10,7 +10,9 @@ import { Container } from "@/shared/ui/primitives";
  * as the end of the page rather than a separate slab.
  *
  * Series and categories come from the API, so the footer is a real navigation
- * surface rather than a hard-coded list that drifts.
+ * surface rather than a hard-coded list that drifts. Series arrive in trending
+ * order; the column shows the first few and ends on the full index, so it stays
+ * the same height however many series there are.
  */
 export function SiteFooter({
   siteName,
@@ -41,6 +43,9 @@ export function SiteFooter({
                 {entry.title}
               </FooterLink>
             ))}
+            <FooterLink href="/series">
+              View all series <span aria-hidden="true">&rarr;</span>
+            </FooterLink>
           </FooterColumn>
 
           <FooterColumn title="Categories">

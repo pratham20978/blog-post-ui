@@ -6,6 +6,7 @@ import {
   byNewest,
   deriveFeedSections,
   nextBlog,
+  rankSeries,
   seriesBlogCounts,
   seriesBlogs,
 } from "./selectors";
@@ -191,6 +192,54 @@ describe("seriesBlogCounts", () => {
     expect(counts.get("s1")).toBe(2);
     expect(counts.get("s2")).toBe(1);
     expect(counts.size).toBe(2);
+  });
+});
+
+describe("rankSeries", () => {
+  const titles = (ranked: readonly Series[]) => ranked.map((entry) => entry.title);
+
+  it("orders by readers plus double-weighted likes, summed across a series", () => {
+    const ranked = rankSeries(
+      [
+        // s1: 10 + 10 = 20. s2: 5 + 2×4 = 13. s3: 3 + 2×9 = 21.
+        blog({ id: "a", slug: "a", series_id: "s1", unique_reader_count: 10 }),
+        blog({ id: "b", slug: "b", series_id: "s1", unique_reader_count: 10 }),
+        blog({ id: "c", slug: "c", series_id: "s2", unique_reader_count: 5, like_count: 4 }),
+        blog({ id: "d", slug: "d", series_id: "s3", unique_reader_count: 3, like_count: 9 }),
+      ],
+      [series("s1", "one"), series("s2", "two"), series("s3", "three")],
+    );
+
+    expect(titles(ranked)).toEqual(["three", "one", "two"]);
+  });
+
+  it("breaks a tie on the most recently published series, then on title", () => {
+    const ranked = rankSeries(
+      [
+        blog({ id: "a", slug: "a", series_id: "s1", published_at: "2026-01-01T00:00:00Z" }),
+        blog({ id: "b", slug: "b", series_id: "s2", published_at: "2026-03-01T00:00:00Z" }),
+        blog({ id: "c", slug: "c", series_id: "s3", published_at: "2026-01-01T00:00:00Z" }),
+      ],
+      [series("s1", "beta"), series("s2", "gamma"), series("s3", "alpha")],
+    );
+
+    expect(titles(ranked)).toEqual(["gamma", "alpha", "beta"]);
+  });
+
+  it("lists series with nothing published after every started one", () => {
+    const ranked = rankSeries(
+      [blog({ id: "a", slug: "a", series_id: "s2" })],
+      [series("s1", "announced"), series("s2", "started")],
+    );
+
+    expect(titles(ranked)).toEqual(["started", "announced"]);
+  });
+
+  it("does not mutate the series it was given", () => {
+    const input = [series("s1", "b"), series("s2", "a")];
+    rankSeries([], input);
+
+    expect(titles(input)).toEqual(["b", "a"]);
   });
 });
 

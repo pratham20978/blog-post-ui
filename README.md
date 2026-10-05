@@ -170,11 +170,11 @@ event, and stored challenge never contain it in plaintext.
 | | |
 | --- | --- |
 | `/` | redirects to `/blogs` |
-| `/blogs` | feed — featured, trending, current series, upcoming series, all |
+| `/blogs` | feed — featured, trending, current series, upcoming series, the latest six, and a searchable dialog of the whole archive |
 | `/blogs/[slug]` | article. `/[slug]/blog` permanently redirects here |
 | `/series`, `/series/[key]` | series index and numbered reading path |
 | `/login`, `/signup` | one passwordless flow, two framings |
-| `/profile` | read-only: continue reading, saved, recently read |
+| `/profile` | read-only: continue reading, saved, recently read — each list previews five, "View all" opens it searchable |
 | `/search` | URL-driven results |
 
 Frontend-owned API routes, not proxied to the backend:
@@ -182,6 +182,7 @@ Frontend-owned API routes, not proxied to the backend:
 | | |
 | --- | --- |
 | `GET /api/blogs/[slug]/next` | what to read after an article — `{slug, id, title, reason}` |
+| `GET /api/blogs` | every published article (`?category=` to narrow) — the index the archive dialog lists and searches |
 | `GET /api/auth/me` | the session, sample mode only |
 | `POST /api/auth/otp-verify` | exchange a code for a session |
 | `POST /api/auth/sign-out` | clear the session cookies |

@@ -108,6 +108,51 @@ export function deriveFeedSections(
   };
 }
 
+/** A like is a deliberate act where a read can be a passing visit, so it
+ *  counts for more. */
+const LIKE_WEIGHT = 2;
+
+/**
+ * Series in trending order — the footer shows the head of this list.
+ *
+ *   score       public engagement across the series' articles in `blogs`:
+ *                 unique readers plus `LIKE_WEIGHT` per like
+ *   ties        the series published into most recently, then title, so the
+ *                 order is total and stable between renders
+ *   unstarted   series with nothing published sort last — still worth listing
+ *                 when a short list would run short, never above one people
+ *                 are reading
+ *
+ * A stand-in, like the trending rail: the counters are all-time totals rather
+ * than a recent window, and cover only the articles the caller fetched. When a
+ * public trending signal exists it replaces this body, and the footer follows.
+ */
+export function rankSeries(
+  blogs: readonly BlogSummary[],
+  series: readonly Series[],
+): readonly Series[] {
+  const stats = new Map<string, { score: number; latest: string }>();
+  for (const blog of blogs) {
+    if (!blog.series_id) continue;
+    const entry = stats.get(blog.series_id) ?? { score: 0, latest: "" };
+    entry.score += blog.unique_reader_count + LIKE_WEIGHT * blog.like_count;
+    if (blog.published_at && blog.published_at > entry.latest) entry.latest = blog.published_at;
+    stats.set(blog.series_id, entry);
+  }
+
+  return [...series].sort((a, b) => {
+    const left = stats.get(a.id);
+    const right = stats.get(b.id);
+    if (left && !right) return -1;
+    if (right && !left) return 1;
+    if (left && right) {
+      const delta = right.score - left.score || right.latest.localeCompare(left.latest);
+      if (delta !== 0) return delta;
+    }
+    return a.title.localeCompare(b.title);
+  });
+}
+
 /** How many published articles each series has — for the series index. */
 export function seriesBlogCounts(
   blogs: readonly BlogSummary[],

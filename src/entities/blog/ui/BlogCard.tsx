@@ -7,7 +7,7 @@ import { Eyebrow, MetaRow } from "@/shared/ui/primitives";
 
 import { BlogCover } from "./BlogCover";
 
-export type BlogCardVariant = "feature" | "split" | "compact";
+export type BlogCardVariant = "feature" | "split" | "compact" | "row";
 
 export interface BlogCardProps {
   blog: BlogSummary;
@@ -30,12 +30,14 @@ export interface BlogCardProps {
 /**
  * Every article card in the platform.
  *
- * Three variants off one props contract, so a card is never written twice and
+ * Four variants off one props contract, so a card is never written twice and
  * a change to the metadata row lands everywhere at once:
  *
  *   feature   full width, cover above — the lead article
  *   split     70% cover / 30% metadata — the main feed
  *   compact   small, stacked — series rails and sidebars
+ *   row       one dense line with a thumbnail — long lists, like the archive
+ *               dialog, where the point is scanning many titles
  *
  * Pure presentation: it receives its cover and its labels and renders them. It
  * does no fetching, so restyling it cannot break any data path.
@@ -141,6 +143,44 @@ export function BlogCard({
             {blog.title}
           </h3>
           <MetaRow items={meta} className="mt-2" />
+        </div>
+      </Link>
+    );
+  }
+
+  if (variant === "row") {
+    // Only what it takes to recognise an article in a long list: no summary,
+    // no counters. The thumbnail drops out on phones, where the title needs
+    // the width — and a hidden lazy image is never fetched.
+    return (
+      <Link
+        href={href}
+        onClick={handleClick}
+        className={cn("group flex items-center gap-4 py-3", className)}
+      >
+        <BlogCover
+          blog={blog}
+          sizes="112px"
+          className="hidden aspect-[16/9] w-28 shrink-0 sm:flex"
+        />
+        <div className="min-w-0 flex-1">
+          <h3 className="line-clamp-2 text-[0.9375rem] font-medium leading-snug text-fg transition-colors group-hover:text-fg-subtle">
+            {blog.title}
+          </h3>
+          <MetaRow
+            className="mt-1"
+            items={[
+              editorialPublished ? (
+                <time key="date" dateTime={toDateAttribute(editorialPublished)}>
+                  {formatDateCompact(editorialPublished)}
+                </time>
+              ) : null,
+              formatReadingTime(blog.reading_minutes),
+              seriesTitle && blog.series_position
+                ? `${seriesTitle} · ${blog.series_position}`
+                : (seriesTitle ?? label),
+            ]}
+          />
         </div>
       </Link>
     );

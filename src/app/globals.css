@@ -29,6 +29,13 @@
     }
   }
 
+  /* An open modal owns the scroll. The padding stands in for the scrollbar
+   * this hides — Dialog measures it — so the page behind does not jump. */
+  html:has(dialog:modal) {
+    overflow: hidden;
+    padding-right: var(--scrollbar-width, 0px);
+  }
+
   body {
     background-color: var(--bg);
     color: var(--fg);
@@ -144,4 +151,11 @@
     clip-path: none;
     white-space: normal;
   }
+}
+
+/* For panels that scroll inside the page — the table of contents, dialog
+ * lists — where a full-width bar would crowd the text beside it. */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-strong) transparent;
 }
